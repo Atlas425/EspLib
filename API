@@ -1,0 +1,154 @@
+local espSettings = {
+    Boxes = false,
+    CornerBoxes = false,
+    Snaplines = false,
+    FovCircle = false,
+    Skeleton = false,
+    Nametags = false,
+}
+
+local cache = {
+  local CornerBoxes = {},
+  local Boxes = {},
+  local Chams = {},
+  local Snaplines = {},
+  local NameTags = {},
+  local HealthBars = {},
+  local FontElements = {},
+  local DisplayBoxes = {},
+}
+
+function FindFirstDescendantOfClass(parent, className)
+	if not parent or not className then return end
+
+	for _, descendant in ipairs(parent:GetDescendants()) do
+		
+		if descendant:IsA(className) then
+			return descendant
+		end
+	end
+
+	return nil
+end
+
+local function createTextLabel(text1, inner)
+	local text = Instance.new("TextLabel")
+	text.Text = text1
+	text.Size = UDim2.new(1, 0, 1, 0)
+	text.TextScaled = true
+	text.Font = Enum.Font.RobotoCondensed
+	text.BackgroundTransparency = 0.5
+	text.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	text.FontFace.Style = Enum.FontStyle.Italic
+	
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(113, 104, 176)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 65, 252))
+	})
+
+	gradient.Parent = text
+
+	local uiCorner1 = Instance.new("UICorner")
+	uiCorner1.CornerRadius = UDim.new(0, 5)
+	uiCorner1.Parent = text
+	
+	text.Parent = inner
+end
+
+local function createIcon(icon1, inner)
+	local icon = Instance.new("ImageLabel")
+	icon.BackgroundTransparency = 1
+	icon.Size = UDim2.new(1, 0, 1, 0)
+	icon.Image = icon1
+	icon.Parent = inner
+end
+
+local function addDisplayBox(model, TextTable)
+	if not model then return end
+
+	local o, size = model:GetBoundingBox()
+	
+	local centerPart = Instance.new("Part")
+	centerPart.Position = o.Position
+	centerPart.Transparency = 1
+	centerPart.CanCollide = false
+	centerPart.Parent = model
+	
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = centerPart
+	weld.Part1 = FindFirstDescendantOfClass(model, "BasePart")
+	weld.Parent = centerPart
+	
+	local baseSize = size.Magnitude
+
+	local minSize, maxSize = 5, 100
+	local minScale, maxScale = 15, 45
+
+	local normalized = math.clamp((baseSize - minSize) / (maxSize - minSize), 0, 1)
+	local guiScale = minScale + (maxScale - minScale) * normalized
+
+	local billboardGui = Instance.new("BillboardGui")
+	billboardGui.Size = UDim2.new(guiScale * 2, 0, guiScale, 0)
+	billboardGui.StudsOffset = Vector3.new(0, size.Y * 1.5, 0)
+	billboardGui.AlwaysOnTop = true
+	billboardGui.Adornee = centerPart
+	billboardGui.Parent = model
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(1, 0, 1, 0)
+	frame.BackgroundTransparency = 0.8
+	frame.BackgroundColor3 = Color3.fromRGB()
+	frame.Parent = billboardGui
+	
+	local innerFrame = Instance.new("Frame")
+	innerFrame.BackgroundTransparency = 1
+	innerFrame.Size = UDim2.new(frame.Size.X.Scale * 0.8, 0, frame.Size.Y.Scale * 0.8, 0)
+	innerFrame.AutomaticSize = Enum.AutomaticSize.Y
+	innerFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+	innerFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	innerFrame.Parent = frame
+
+	local layout = Instance.new("UIGridLayout")
+	layout.CellSize = UDim2.new(0.3, 0, 0.3, 0)
+	layout.CellPadding = UDim2.new(0, 5, 0, 5)
+	layout.FillDirection = Enum.FillDirection.Horizontal
+	layout.FillDirectionMaxCells = 2
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.VerticalAlignment = Enum.VerticalAlignment.Top
+	layout.Parent = innerFrame
+	
+	if TextTable then
+		
+		for i, element in pairs(TextTable) do
+			
+			createIcon(element.Icon, innerFrame)
+			createTextLabel(element.Text, innerFrame)
+		end
+	end
+
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(176, 95, 126)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 38, 244))
+	})
+
+	gradient.Parent = frame
+
+	local uiCorner = Instance.new("UICorner")
+	uiCorner.CornerRadius = UDim.new(0, 25)
+	uiCorner.Parent = frame
+end
+
+local textTable = {
+	{Icon = "rbxassetid://10739290877", Text = "Enemies: " .. "6"},
+	{Icon = "rbxassetid://14732311568", Text = "$173"},
+	{Icon = "rbxassetid://6427877531", Text = "Fuel: " .. "216%"},
+}
+
+return {
+  espSettings = espSettings,
+  cache = cache,
+  addDisplayBox = addDisplayBox,
+}
