@@ -22,7 +22,7 @@ local espColors = {
     Nametags = Color3.fromRGB(255, 0, 0),
     TextLabels = Color3.fromRGB(255, 0, 0),
     Chams = Color3.fromRGB(255, 0, 0),
-    ChamsTweenEnd
+    ChamsTweenEnd = Color3.fromRGB(255, 0, 0),
 }
 
 local function transparencySettings = {
