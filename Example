@@ -1,0 +1,8 @@
+local textTable = {
+	{Icon = "rbxassetid://10739290877", Text = "Enemies: " .. "6"},
+	{Icon = "rbxassetid://14732311568", Text = "$173"},
+	{Icon = "rbxassetid://6427877531", Text = "Fuel: " .. "216%"},
+}
+
+addDisplayBox(game.Workspace.TargetModel, textTable) -- Creates a billboardgui text box with icons/text grid based on model size.
+--No primary part is needed for this because it creates a center part as the billboard adornee in the middle of the model, so any model is valid.
