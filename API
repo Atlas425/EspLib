@@ -11,6 +11,7 @@ local espSettings = {
     Nametags = false,
     Font = Enum.Font.RobotoCondensed,
     ChamsAlwaysOnTop = true,
+    FovRadius = 90,
 }
 
 local espColors = {
@@ -168,7 +169,7 @@ end
 local function drawFOVCircle()
     local circle = Drawing.new("Circle")
     circle.NumSides = 50
-    circle.Radius = 90
+    circle.Radius = espSettings.FovRadius * 2
     circle.Position = screenCenter
     circle.Thickness = 1
     circle.Visible = true
