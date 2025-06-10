@@ -1,3 +1,7 @@
+local camera = game:GetService("Workspace").CurrentCamera
+local viewportSize = camera.ViewportSize
+local screenCenter = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
+
 local espSettings = {
     Boxes = false,
     CornerBoxes = false,
@@ -5,7 +9,25 @@ local espSettings = {
     FovCircle = false,
     Skeleton = false,
     Nametags = false,
-    Font = "RobotoCondensed",
+    Font = Enum.Font.RobotoCondensed,
+    ChamsAlwaysOnTop = true,
+}
+
+local espColors = {
+    Boxes = Color3.fromRGB(255, 0, 0),
+    CornerBoxes = Color3.fromRGB(255, 0, 0),
+    Snaplines = Color3.fromRGB(255, 0, 0),
+    FovCircle = Color3.fromRGB(255, 0, 0),
+    Skeleton = Color3.fromRGB(255, 0, 0),
+    Nametags = Color3.fromRGB(255, 0, 0),
+    TextLabels = Color3.fromRGB(255, 0, 0),
+    Chams = Color3.fromRGB(255, 0, 0),
+    ChamsTweenEnd
+}
+
+local function transparencySettings = {
+    Chams = 0,
+
 }
 
 local cache = {
@@ -17,6 +39,7 @@ local cache = {
   local HealthBars = {},
   local FontElements = {},
   local DisplayBoxes = {},
+  local FovDrawings = {},
 }
 
 function FindFirstDescendantOfClass(parent, className)
@@ -37,7 +60,7 @@ local function createTextLabel(text1, inner)
 	text.Text = text1
 	text.Size = UDim2.new(1, 0, 1, 0)
 	text.TextScaled = true
-	text.Font = Enum.Font[espSettings.Font]
+	text.Font = Enum.Font.RobotoCondensed
 	text.BackgroundTransparency = 0.5
 	text.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	text.FontFace.Style = Enum.FontStyle.Italic
@@ -142,8 +165,109 @@ local function addDisplayBox(model, TextTable)
 	uiCorner.Parent = frame
 end
 
+local function drawFOVCircle()
+    local circle = Drawing.new("Circle")
+    circle.NumSides = 50
+    circle.Radius = 90
+    circle.Position = screenCenter
+    circle.Thickness = 1
+    circle.Visible = true
+    circle.Filled = false
+
+    table.insert(FovDrawings, circle)
+end
+
+local function drawSnaplines(model, from, to)
+    if not model then return end
+
+    local line = cache.Snaplines[model]
+
+    if not line then
+        local line = Drawing.new("Line")
+        line.Thickness = 1
+        line.Visible = true
+        line.Color = espColors.Snaplines
+        cache.Snaplines[model] = line
+    end
+
+    line.From = from or screenCenter
+    line.To = to
+    line.Visible = true
+end
+
+local function createChams(model)
+    if model:IsA("BasePart")
+        local chams = Instance.new("BoxHandleAdornment")
+        chams.Transparency = transparencySettings.Chams
+        chams.Size = model.Size
+        chams.ZIndex = 10
+        chams.AlwaysOnTop = espSettings.ChamsAlwaysOnTop
+        chams.Color = espColors.Chams
+        chams.Adornee = model
+        chams.Parent = model
+        chams.Name = "Chams"
+        cache.Chams[model] = {chams}
+
+    elseif model:IsA("Model") then
+        local chamsList = {}
+
+        for i, part in pairs(model:GetDescendants()) do
+            if not part:IsA("BasePart") then continue end
+
+            local chams = Instance.new("BoxHandleAdornment")
+            chams.Transparency = transparencySettings.Chams
+            chams.Size = part.Size
+            chams.ZIndex = 10
+            chams.AlwaysOnTop = espSettings.ChamsAlwaysOnTop
+            chams.Color = espColors.Chams
+            chams.Adornee = part
+            chams.Parent = part
+            chams.Name = "Chams"
+            
+            table.insert(chamsList, chams)
+        end
+
+        cache.Chams[model] = chamsList
+    end
+end
+
+local function chamsTween(model)
+    local chams = cache.Chams[model]
+    if not chams then return end
+
+    for _, cham in ipairs(chams) do
+
+        if cham and cham:IsA("BoxHandleAdornment") then
+
+            local tweenInfo = TweenInfo.new(0.75, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            local goal = {Color = espColors.ChamsTweenEnd}
+
+            local tween = TweenService:Create(cham, tweenInfo, goal)
+            tween:Play()
+        end
+    end
+end
+
+local function removeSnapline(model)
+    if not model then return end
+
+    local line = cache.Snaplines[model]
+
+    if line then
+        line:Destroy()
+        cache.Snaplines[player] = nil
+    end
+end
+
 return {
-  espSettings = espSettings,
-  cache = cache,
-  addDisplayBox = addDisplayBox,
+    espSettings = espSettings,
+    transparencySettings = transparencySettings,
+    espColors = espColors,
+    cache = cache,
+    addDisplayBox = addDisplayBox,
+    drawSnaplines = drawSnaplines,
+    drawFOVCircle = drawFOVCircle,
+    createChams = createChams,
+    chamsTween = chamsTween,
+    removeSnapline = removeSnapline,
 }
