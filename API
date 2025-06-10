@@ -5,6 +5,7 @@ local espSettings = {
     FovCircle = false,
     Skeleton = false,
     Nametags = false,
+    Font = "RobotoCondensed",
 }
 
 local cache = {
@@ -36,7 +37,7 @@ local function createTextLabel(text1, inner)
 	text.Text = text1
 	text.Size = UDim2.new(1, 0, 1, 0)
 	text.TextScaled = true
-	text.Font = Enum.Font.RobotoCondensed
+	text.Font = Enum.Font[espSettings.Font]
 	text.BackgroundTransparency = 0.5
 	text.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	text.FontFace.Style = Enum.FontStyle.Italic
@@ -140,12 +141,6 @@ local function addDisplayBox(model, TextTable)
 	uiCorner.CornerRadius = UDim.new(0, 25)
 	uiCorner.Parent = frame
 end
-
-local textTable = {
-	{Icon = "rbxassetid://10739290877", Text = "Enemies: " .. "6"},
-	{Icon = "rbxassetid://14732311568", Text = "$173"},
-	{Icon = "rbxassetid://6427877531", Text = "Fuel: " .. "216%"},
-}
 
 return {
   espSettings = espSettings,
