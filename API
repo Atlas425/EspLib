@@ -183,11 +183,23 @@ local function drawSnaplines(model, from, to)
     local line = cache.Snaplines[model]
 
     if not line then
-        local line = Drawing.new("Line")
+        line = Drawing.new("Line")
         line.Thickness = 1
         line.Visible = true
         line.Color = espColors.Snaplines
         cache.Snaplines[model] = line
+    end
+
+    if typeof(from) == "Vector3" and model:IsA("Model") and model.PrimaryPart then
+
+	    local pos = model:GetPrimaryPartCFrame().Position
+	    local modelPos = camera:WorldToViewportPoint(pos)
+        to = modelPos
+    elseif typeof(from) == "Vector3" and model:IsA("BasePart") then
+
+        local pos = model.Position
+	    local modelPos = camera:WorldToViewportPoint(pos)
+        to = modelPos
     end
 
     line.From = from or screenCenter
