@@ -29,7 +29,8 @@ local mousePos = game.UserInputService:GetMouseLocation()
 local modelPos = model.Head.Position
 
 espLib.DrawSnaplines(model, mousePos, modelPos) --Draws snapline from center of screen to mouse, TargetModel is the key. Automatically converts Position or CFrame to 2d vector.
-espLib.drawFOVCircle() --Draws simple fov circle based on configuration settings.
+espLib.drawFOVCircle(false) --Draws simple fov circle based on configuration settings.
+espLib.drawFOVCircle(true) --Updates any existing circles radius and position to espsettings radius. (Useful if window size changes, or you want to change fov circle radius)
 espLib.createChams(game.Workspace.TargetModel) --Creates chams based on settings for every single basepart found in TargetModel. A basepart can also be passed to this function.
 espLib.chamsTween(game.Workspace.TargetModel) --Creates color tweening effect to espColors.ChamsTweenEnd if chams already exist for that model. Useful as a death effect, or smooth color changing transitioning.
 
