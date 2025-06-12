@@ -166,16 +166,28 @@ local function addDisplayBox(model, TextTable)
 	uiCorner.Parent = frame
 end
 
-local function drawFOVCircle()
-    local circle = Drawing.new("Circle")
-    circle.NumSides = 50
-    circle.Radius = espSettings.FovRadius * 2
-    circle.Position = screenCenter
-    circle.Thickness = 1
-    circle.Visible = true
-    circle.Filled = false
+local function drawFOVCircle(update)
+    if not update then
+        local circle = Drawing.new("Circle")
+        circle.NumSides = 50
+        circle.Radius = espSettings.FovRadius * 2
+        circle.Position = screenCenter
+        circle.Thickness = 1
+        circle.Visible = true
+        circle.Filled = false
 
-    table.insert(FovDrawings, circle)
+        table.insert(FovDrawings, circle)
+
+    else
+        
+        for _, drawing in pairs(FovDrawings) do
+
+            local sc = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
+            drawing.Radius = espSettings.FovRadius * 2
+            drawing.Position = sc
+            drawing.Visible = true
+        end
+    end
 end
 
 local function drawSnaplines(model, from, to)
