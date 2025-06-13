@@ -228,7 +228,7 @@ local function createChams(model)
         chams.Size = model.Size
         chams.ZIndex = 10
         chams.AlwaysOnTop = espSettings.ChamsAlwaysOnTop
-        chams.Color = espColors.Chams
+        chams.Color3 = espColors.Chams
         chams.Adornee = model
         chams.Parent = model
         chams.Name = "Chams"
@@ -245,7 +245,7 @@ local function createChams(model)
             chams.Size = part.Size
             chams.ZIndex = 10
             chams.AlwaysOnTop = espSettings.ChamsAlwaysOnTop
-            chams.Color = espColors.Chams
+            chams.Color3 = espColors.Chams
             chams.Adornee = part
             chams.Parent = part
             chams.Name = "Chams"
