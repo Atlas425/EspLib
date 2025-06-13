@@ -26,24 +26,24 @@ local espColors = {
     ChamsTweenEnd = Color3.fromRGB(255, 0, 0),
 }
 
-local function transparencySettings = {
+local transparencySettings = {
     Chams = 0,
 
 }
 
 local cache = {
-  local CornerBoxes = {},
-  local Boxes = {},
-  local Chams = {},
-  local Snaplines = {},
-  local NameTags = {},
-  local HealthBars = {},
-  local FontElements = {},
-  local DisplayBoxes = {},
-  local FovDrawings = {},
+	CornerBoxes = {},
+	Boxes = {},
+	Chams = {},
+	Snaplines = {},
+	NameTags = {},
+	HealthBars = {},
+	FontElements = {},
+	DisplayBoxes = {},
+	FovDrawings = {},
 }
 
-function FindFirstDescendantOfClass(parent, className)
+local function FindFirstDescendantOfClass(parent, className)
 	if not parent or not className then return end
 
 	for _, descendant in ipairs(parent:GetDescendants()) do
@@ -176,11 +176,11 @@ local function drawFOVCircle(update)
         circle.Visible = true
         circle.Filled = false
 
-        table.insert(FovDrawings, circle)
+        table.insert(cache.FovDrawings, circle)
 
     else
         
-        for _, drawing in pairs(FovDrawings) do
+        for _, drawing in pairs(cache.FovDrawings) do
 
             local sc = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
             drawing.Radius = espSettings.FovRadius * 2
@@ -221,7 +221,7 @@ local function drawSnaplines(model, from, to)
 end
 
 local function createChams(model)
-    if model:IsA("BasePart")
+    if model:IsA("BasePart") then
         local chams = Instance.new("BoxHandleAdornment")
         chams.Transparency = transparencySettings.Chams
         chams.Size = model.Size
@@ -267,7 +267,7 @@ local function chamsTween(model)
             local tweenInfo = TweenInfo.new(0.75, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             local goal = {Color = espColors.ChamsTweenEnd}
 
-            local tween = TweenService:Create(cham, tweenInfo, goal)
+            local tween = game:GetService("TweenService"):Create(cham, tweenInfo, goal)
             tween:Play()
         end
     end
@@ -280,7 +280,7 @@ local function removeSnapline(model)
 
     if line then
         line:Destroy()
-        cache.Snaplines[player] = nil
+        cache.Snaplines[model] = nil
     end
 end
 
