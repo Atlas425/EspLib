@@ -9,6 +9,7 @@ local espSettings = {
     FovCircle = false,
     Skeleton = false,
     Nametags = false,
+    Chams = false,
     Font = Enum.Font.RobotoCondensed,
     ChamsAlwaysOnTop = true,
     FovRadius = 90,
