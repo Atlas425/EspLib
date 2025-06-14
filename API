@@ -165,6 +165,8 @@ local function addDisplayBox(model, TextTable)
 	local uiCorner = Instance.new("UICorner")
 	uiCorner.CornerRadius = UDim.new(0, 25)
 	uiCorner.Parent = frame
+
+	table.insert(cache.DisplayBoxes, billboardGui)
 end
 
 local function drawFOVCircle(update)
