@@ -38,3 +38,10 @@ espLib.removeSnapline(game.Workspace.TargetModel) --Removes any active snapline 
 
 espLib.trackModel(game.Players.LocalPlayer.Character) --Adds model to tracking list for all esp settings. If all settings enabled, will automatically draw skeletons, boxes, etc onto model and update.
 --Everything in main loop updates automatically to espColors, font, and Name.
+
+local resolvedNames = {
+    "AI_Enemy" = "NPC",
+}
+
+espLib.customNames[game.Workspace.NPCS.TestNPC] = resolvedNames[game.Workspace.NPCS.TestNPC.Name] --Automatically updates this npc's name to found name in resolvedNames e.g. "NPC" in this case.
+
