@@ -330,7 +330,7 @@ local function createChams(part)
 				table.insert(chamsList, chams)
 			end
 			
-			cache.Chams[model] = chamsList
+			cache.Chams[part] = chamsList
 		end
 	end
 end
