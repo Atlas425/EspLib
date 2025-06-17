@@ -35,3 +35,5 @@ espLib.createChams(game.Workspace.TargetModel) --Creates chams based on settings
 espLib.chamsTween(game.Workspace.TargetModel) --Creates color tweening effect to espColors.ChamsTweenEnd if chams already exist for that model. Useful as a death effect, or smooth color changing transitioning.
 
 espLib.removeSnapline(game.Workspace.TargetModel) --Removes any active snapline for TargetModel.
+espLib.createESPBox(game.Players.LocalPlayer.Character) --Adds corner box esp to local player's character.
+espLib.removeESPBox(game.Players.LocalPlayer.Character) --Removes corner box from local player's character if it exists.
