@@ -2,6 +2,7 @@ local camera = game:GetService("Workspace").CurrentCamera
 local viewportSize = camera.ViewportSize
 local screenCenter = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
 
+local chamsExclusionList = {}
 local customNames = {}
 local lastDrawings = {}
 local SEGMENT_COUNT = 50
@@ -232,7 +233,7 @@ local function drawSnaplines(model, from, to)
 end
 
 local function checkValidPart(part)
-	if not part:IsA("BasePart") or part.Name == "HumanoidRootPart" or part.Name == "Head" then return false end
+	if not part:IsA("BasePart") or part.Name == "HumanoidRootPart" or part.Name == "Head" or chamsExclusionList[part] then return false end
 	
 	return true
 end
@@ -801,4 +802,5 @@ return {
     removeBox = removeESPBox,
     trackModel = TrackModel,
     customNames = customNames,
+    chamsExclusionList = chamsExclusionList,
 }
