@@ -232,8 +232,18 @@ local function drawSnaplines(model, from, to)
     line.Visible = true
 end
 
+local function isExcluded(partName)
+	for _, name in ipairs(espLib.chamsExclusionList) do
+		if name == partName then
+			return true
+		end
+	end
+
+	return false
+end
+
 local function checkValidPart(part)
-	if not part:IsA("BasePart") or part.Name == "HumanoidRootPart" or part.Name == "Head" or chamsExclusionList[part.Name] then return false end
+	if not part:IsA("BasePart") or part.Name == "HumanoidRootPart" or part.Name == "Head" or isExcluded(part.Name) then return false end
 	
 	return true
 end
