@@ -233,7 +233,7 @@ local function drawSnaplines(model, from, to)
 end
 
 local function checkValidPart(part)
-	if not part:IsA("BasePart") or part.Name == "HumanoidRootPart" or part.Name == "Head" or chamsExclusionList[part] then return false end
+	if not part:IsA("BasePart") or part.Name == "HumanoidRootPart" or part.Name == "Head" or chamsExclusionList[part.Name] then return false end
 	
 	return true
 end
