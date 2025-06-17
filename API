@@ -2,6 +2,9 @@ local camera = game:GetService("Workspace").CurrentCamera
 local viewportSize = camera.ViewportSize
 local screenCenter = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
 
+local lastDrawings = {}
+local SEGMENT_COUNT = 50
+
 local espSettings = {
     maxDistance = 1000,
     Boxes = false,
@@ -290,136 +293,428 @@ local function removeSnapline(model)
     end
 end
 
-local espModels = {}
-local lastCleanup = 0
-local cleanupInterval = 0.25
-
-local function createESPBox(model)
-	for _, tracked in ipairs(espModels) do
-		if tracked.model == model then return end
-	end
-
-	local lines = {}
-	for i = 1, 8 do
-		local line = Drawing.new("Line")
-		line.Thickness = 2
-		line.Color = espColors.CornerBoxes
-		line.Visible = false
-		table.insert(lines, line)
-	end
-
-	table.insert(espModels, {
-		model = model,
-		lines = lines,
-	})
+local function createLine()
+    local line = Drawing.new("Line")
+    line.Visible = false
+    line.Thickness = 1.5
+    line.Color = Color3.fromRGB(255, 255, 255)
+    return line
 end
 
-local function removeESPBox(model)
-    for i = #espModels, 1, -1 do
-        if espModels[i].model == model then
-            for _, line in ipairs(espModels[i].lines) do
-                if line and line.Remove then
-                    line:Remove()
+local function createText()
+    local text = Drawing.new("Text")
+    text.Visible = false
+    text.Size = 14
+    text.Color = Color3.fromRGB(255, 255, 255)
+    text.Outline = true
+    return text
+end
+
+local function isOnScreenAndInDistance(rootPos)
+    local screenPos, onScreen = camera:WorldToViewportPoint(rootPos)
+    local distance = (camera.CFrame.Position - rootPos).Magnitude
+    return onScreen and distance <= espSettings.maxDistance, screenPos
+end
+
+local function updateSkeleton(model)
+    if not espSettings.Skeleton then
+        if cache.Skeletons[model] then
+            for _, l in ipairs(cache.Skeletons[model]) do l.Visible = false end
+        end
+        return
+    end
+
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    local rigType = humanoid.RigType
+
+    cache.Skeletons[model] = cache.Skeletons[model] or {}
+    for _, line in ipairs(cache.Skeletons[model]) do line:Remove() end
+    cache.Skeletons[model] = {}
+
+    local function drawLine(fromWorld, toWorld)
+        local from2D, visA = camera:WorldToViewportPoint(fromWorld)
+        local to2D, visB = camera:WorldToViewportPoint(toWorld)
+        local line = createLine()
+        if visA and visB then
+            line.From = Vector2.new(from2D.X, from2D.Y)
+            line.To = Vector2.new(to2D.X, to2D.Y)
+            line.Color = espColors.Skeleton
+            line.Visible = true
+        end
+        table.insert(cache.Skeletons[model], line)
+    end
+
+    if rigType == Enum.HumanoidRigType.R15 then
+        local bones = {
+            {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
+            {"UpperTorso", "LeftUpperArm"}, {"LeftUpperArm", "LeftLowerArm"}, {"LeftLowerArm", "LeftHand"},
+            {"UpperTorso", "RightUpperArm"}, {"RightUpperArm", "RightLowerArm"}, {"RightLowerArm", "RightHand"},
+            {"LowerTorso", "LeftUpperLeg"}, {"LeftUpperLeg", "LeftLowerLeg"}, {"LeftLowerLeg", "LeftFoot"},
+            {"LowerTorso", "RightUpperLeg"}, {"RightUpperLeg", "RightLowerLeg"}, {"RightLowerLeg", "RightFoot"}
+        }
+
+        for _, pair in ipairs(bones) do
+            local a, b = model:FindFirstChild(pair[1]), model:FindFirstChild(pair[2])
+            local line = createLine()
+            if a and b then
+                local a2D, visA = camera:WorldToViewportPoint(a.Position)
+                local b2D, visB = camera:WorldToViewportPoint(b.Position)
+                if visA and visB then
+                    line.From = Vector2.new(a2D.X, a2D.Y)
+                    line.To = Vector2.new(b2D.X, b2D.Y)
+                    line.Color = espColors.Skeleton
+                    line.Visible = true
                 end
             end
-            table.remove(espModels, i)
-            break
+            table.insert(cache.Skeletons[model], line)
+        end
+
+    elseif rigType == Enum.HumanoidRigType.R6 then
+        local head = model:FindFirstChild("Head")
+        local torso = model:FindFirstChild("Torso")
+        local leftArm = model:FindFirstChild("Left Arm")
+        local rightArm = model:FindFirstChild("Right Arm")
+        local leftLeg = model:FindFirstChild("Left Leg")
+        local rightLeg = model:FindFirstChild("Right Leg")
+
+        if not (head and torso and leftArm and rightArm and leftLeg and rightLeg) then return end
+
+        local torsoMid = torso.Position
+        local shoulderHeight = torso.CFrame.UpVector * torso.Size.Y/2 * 0.75
+        local horizontalOffset = torso.CFrame.RightVector * torso.Size.X/2 * 0.85
+
+        local torsoTopLeft = torso.Position - horizontalOffset + shoulderHeight
+        local torsoTopRight = torso.Position + horizontalOffset + shoulderHeight
+
+        drawLine(head.Position, torso.Position)
+
+        drawLine(torsoMid, torsoTopLeft)
+        drawLine(torsoMid, torsoTopRight)
+
+        local leftArmBottom = leftArm.Position - leftArm.CFrame.UpVector * leftArm.Size.Y / 2
+        local rightArmBottom = rightArm.Position - rightArm.CFrame.UpVector * rightArm.Size.Y / 2
+        local leftArmTop = leftArm.Position + leftArm.CFrame.UpVector * leftArm.Size.Y / 2 * 0.75
+        local rightArmTop = rightArm.Position + rightArm.CFrame.UpVector * rightArm.Size.Y / 2 * 0.75
+
+
+        drawLine(leftArmTop, leftArmBottom)
+        drawLine(rightArmTop, rightArmBottom)
+
+        drawLine(leftArmTop, torsoTopLeft)
+        drawLine(rightArmTop, torsoTopRight)
+
+        local leftLegTop = leftLeg.Position + leftLeg.CFrame.UpVector * leftLeg.Size.Y/2
+        local rightLegTop = rightLeg.Position + rightLeg.CFrame.UpVector * rightLeg.Size.Y/2
+        local leftLegBottom = leftLeg.Position - leftLeg.CFrame.UpVector * leftLeg.Size.Y/2
+        local rightLegBottom = rightLeg.Position - rightLeg.CFrame.UpVector * rightLeg.Size.Y/2
+
+        drawLine(torsoMid, leftLegTop)
+        drawLine(torsoMid, rightLegTop)
+        drawLine(leftLegTop, leftLegBottom)
+        drawLine(rightLegTop, rightLegBottom)
+    end
+end
+
+local function updateCornerBoxes(model, topVec, bottomVec, boxCenter, boxWidth, boxHeight)
+    if not espSettings.CornerBoxes then
+        if cache.CornerBoxes[model] then
+            for _, l in ipairs(cache.CornerBoxes[model]) do l.Visible = false end
+        end
+        return
+    end
+
+    local topLeft = Vector2.new(boxCenter.X - boxWidth/2, topVec.Y)
+    local topRight = Vector2.new(boxCenter.X + boxWidth/2, topVec.Y)
+    local bottomLeft = Vector2.new(boxCenter.X - boxWidth/2, bottomVec.Y)
+    local bottomRight = Vector2.new(boxCenter.X + boxWidth/2, bottomVec.Y)
+
+    local minSide = math.min(boxWidth, boxHeight)
+    local lineLength = math.clamp(minSide * 0.2, 2, math.max(2, minSide * 0.45))
+    local thickness = math.clamp(boxWidth / 100, 1, 2)
+
+    local box = cache.CornerBoxes[model]
+    if not box then return end
+
+    local positions = {
+        {topLeft, topLeft + Vector2.new(lineLength, 0)},
+        {topLeft, topLeft + Vector2.new(0, lineLength)},
+        {topRight, topRight - Vector2.new(lineLength, 0)},
+        {topRight, topRight + Vector2.new(0, lineLength)},
+        {bottomLeft, bottomLeft + Vector2.new(lineLength, 0)},
+        {bottomLeft, bottomLeft - Vector2.new(0, lineLength)},
+        {bottomRight, bottomRight - Vector2.new(lineLength, 0)},
+        {bottomRight, bottomRight - Vector2.new(0, lineLength)}
+    }
+
+    for i, line in ipairs(box) do
+        line.From = positions[i][1]
+        line.To = positions[i][2]
+        line.Thickness = thickness
+        line.Color = espColors.CornerBoxes
+        line.Visible = true
+    end
+end
+
+local function getGradientColor(t)
+    if t < 0.35 then
+        return Color3.fromRGB(0, 255, 0):Lerp(Color3.fromRGB(255, 255, 0), t * 2)
+    elseif t < 0.85 then
+        return Color3.fromRGB(255, 255, 0):Lerp(Color3.fromRGB(255, 0, 0), (t - 0.5) / 0.35)
+    else
+        return Color3.fromRGB(255, 0, 0)
+    end
+end
+
+local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, humanoid)
+    if not espSettings.Healthbar then
+        if cache.HealthBars[model] then
+            for _, segment in ipairs(cache.HealthBars[model].segments or {}) do
+                segment.Visible = false
+            end
+            if cache.HealthBars[model].background then
+                cache.HealthBars[model].background.Visible = false
+            end
+        end
+        return
+    end
+
+    if cache.HealthBars[model] then
+        for _, segment in ipairs(cache.HealthBars[model].segments or {}) do
+            if segment and segment.Remove then segment:Remove() end
+        end
+        if cache.HealthBars[model].background and cache.HealthBars[model].background.Remove then
+            cache.HealthBars[model].background:Remove()
+        end
+    end
+
+    cache.HealthBars[model] = {
+        segments = {},
+        background = Drawing.new("Line")
+    }
+
+    local bar = cache.HealthBars[model]
+    for i = 1, SEGMENT_COUNT do
+        local segmentLine = Drawing.new("Line")
+        segmentLine.Visible = false
+        segmentLine.ZIndex = 2
+        bar.segments[i] = segmentLine
+    end
+
+    local healthRatio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
+
+    local cf, size = model:GetBoundingBox()
+    local halfHeight = size.Y / 2
+    local topWorld = cf.Position + Vector3.new(0, halfHeight, 0)
+    local bottomWorld = cf.Position - Vector3.new(0, halfHeight, 0)
+
+    local topVec2D = camera:WorldToViewportPoint(topWorld)
+    local bottomVec2D = camera:WorldToViewportPoint(bottomWorld)
+
+    local barHeight = bottomVec2D.Y - topVec2D.Y
+    local barThickness = math.clamp(barHeight / 12.5, 1, 3) * 2.5
+    local barLeftX = boxCenter.X - boxWidth / 2 - math.clamp(barHeight / 10, 8, 15)
+    local barTopY = topVec2D.Y
+
+    local missingHeight = (1 - healthRatio) * barHeight
+    bar.background.From = Vector2.new(barLeftX, barTopY)
+    bar.background.To = Vector2.new(barLeftX, barTopY + missingHeight)
+
+    bar.background.Thickness = barThickness
+    bar.background.Color = Color3.new(0.1, 0.1, 0.1)
+    bar.background.ZIndex = 1
+    bar.background.Visible = healthRatio < 1
+
+    for i = 1, SEGMENT_COUNT do
+        local segment = bar.segments[i]
+        if segment then
+            local t = 1 - (i / SEGMENT_COUNT)
+            local segY1 = barTopY + (1 - t - 1 / SEGMENT_COUNT) * barHeight
+            local segY2 = barTopY + (1 - t) * barHeight
+
+
+            local from = Vector2.new(barLeftX, segY1)
+            local to = Vector2.new(barLeftX, segY2)
+
+            segment.From = from
+            segment.To = to
+            segment.Thickness = barThickness
+            segment.Color = getGradientColor(1 - t)
+            segment.Visible = t < healthRatio
         end
     end
 end
 
-local function moveAway(point, center, amount)
-	local dir = (point - center)
-	if dir.Magnitude == 0 then return point end
-	return point + dir.Unit * amount
+
+local function updateNametag(model, topVec, boxCenter)
+    if not espSettings.Nametags then
+        if cache.NameTags[model] then
+            cache.NameTags[model].Visible = false
+        end
+        return
+    end
+
+    local tag = cache.NameTags[model]
+    if not tag then return end
+
+    tag.Text = model.Name
+    local yOffset = topVec.Y - 25
+    tag.Position = Vector2.new(boxCenter.X - tag.TextBounds.X/2, yOffset)
+    tag.Visible = true
+    tag.Color = espColors.Nametags
 end
 
-local function updateCornerBoxes()
-	local camera = workspace.CurrentCamera
-	local now = tick()
+function espLib:TrackModel(model)
+    if not model:IsA("Model") then return end
+    if cache.CornerBoxes[model] then return end
 
-	if now - lastCleanup >= cleanupInterval then
-		for i = #espModels, 1, -1 do
-			local model = espModels[i].model
-			if not model or not model:IsDescendantOf(workspace) then
-				for _, line in ipairs(espModels[i].lines) do
-					line:Remove()
-				end
-				table.remove(espModels, i)
-			end
-		end
-		lastCleanup = now
-	end
+    cache.CornerBoxes[model] = {}
+    for _ = 1, 8 do table.insert(cache.CornerBoxes[model], createLine()) end
 
-	for _, esp in ipairs(espModels) do
-		local model = esp.model
-		local lines = esp.lines
-		local root = model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+    cache.HealthBars[model] = {
+        background = createLine(),
+        fill = createLine()
+    }
 
-		if not root or not root:IsDescendantOf(workspace) then
-			continue
-		end
+    cache.NameTags[model] = createText()
+    cache.NameTags[model].Size = 16
+    cache.NameTags[model].Center = false
 
-		local screenPos, onScreen = camera:WorldToViewportPoint(root.Position)
-		local distance = (camera.CFrame.Position - root.Position).Magnitude
-
-		if not onScreen or distance > espSettings.maxDistance or not espSettings.CornerBoxes then
-			for _, line in ipairs(lines) do
-				line.Visible = false
-			end
-			continue
-		end
-
-		local topVec = camera:WorldToViewportPoint(root.Position + Vector3.new(0, 2.6, 0))
-		local bottomVec = camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
-
-		local boxHeight = math.abs(topVec.Y - bottomVec.Y)
-		local boxWidth = boxHeight * 0.6
-		local center = Vector2.new(screenPos.X, screenPos.Y)
-		local boxSize = Vector2.new(boxWidth, boxHeight)
-
-		local topLeft = moveAway(Vector2.new(center.X - boxWidth / 2, center.Y - boxHeight / 2), center, 4)
-		local topRight = moveAway(Vector2.new(center.X + boxWidth / 2, center.Y - boxHeight / 2), center, 4)
-		local bottomLeft = moveAway(Vector2.new(center.X - boxWidth / 2, center.Y + boxHeight / 2), center, 4)
-		local bottomRight = moveAway(Vector2.new(center.X + boxWidth / 2, center.Y + boxHeight / 2), center, 4)
-
-		local minSide = math.min(boxWidth, boxHeight)
-		local lineLength = math.clamp(minSide * 0.2, 2, math.max(2, minSide * 0.45))
-		local thickness = math.clamp(boxSize.X / 100, 1, 2)
-
-		lines[1].From = topLeft
-		lines[1].To = topLeft + Vector2.new(lineLength, 0)
-
-		lines[2].From = topLeft
-		lines[2].To = topLeft + Vector2.new(0, lineLength)
-
-		lines[3].From = topRight
-		lines[3].To = topRight - Vector2.new(lineLength, 0)
-
-		lines[4].From = topRight
-		lines[4].To = topRight + Vector2.new(0, lineLength)
-
-		lines[5].From = bottomLeft
-		lines[5].To = bottomLeft + Vector2.new(lineLength, 0)
-
-		lines[6].From = bottomLeft
-		lines[6].To = bottomLeft - Vector2.new(0, lineLength)
-
-		lines[7].From = bottomRight
-		lines[7].To = bottomRight - Vector2.new(lineLength, 0)
-
-		lines[8].From = bottomRight
-		lines[8].To = bottomRight - Vector2.new(0, lineLength)
-
-		for _, line in ipairs(lines) do
-			line.Visible = true
-			line.Thickness = thickness
-			line.Color = espColors.CornerBoxes
-		end
-	end
+    cache.Skeletons[model] = {}
 end
 
-game:GetService("RunService").RenderStepped:Connect(updateCornerBoxes)
+local function updateColors()
+    for model, tag in pairs(cache.NameTags) do
+        if tag then
+            tag.Color = espColors.Nametags or Color3.new(1, 1, 1)
+            tag.Font = espSettings.Font or Drawing.Fonts.UI
+        end
+    end
+
+    for model, boxLines in pairs(cache.CornerBoxes) do
+        if boxLines then
+            for _, line in ipairs(boxLines) do
+                if line then
+                    line.Color = espColors.CornerBoxes or Color3.new(1, 1, 1)
+                end
+            end
+        end
+    end
+
+    for model, skeletonLines in pairs(cache.Skeletons) do
+        if skeletonLines then
+            for _, line in ipairs(skeletonLines) do
+                if line then
+                    line.Color = espColors.Skeleton or Color3.new(1, 1, 1)
+                end
+            end
+        end
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+
+    for _, drawing in ipairs(lastDrawings) do
+        if drawing and drawing.Remove then
+            drawing:Remove()
+        end
+    end
+    table.clear(lastDrawings)
+
+    for model, _ in pairs(cache.CornerBoxes) do
+        local humanoid = model:FindFirstChildOfClass("Humanoid")
+        local root = model:FindFirstChild("HumanoidRootPart")
+
+        local shouldRemove = not model:IsDescendantOf(workspace)
+            or not humanoid
+            or not root
+            or humanoid.Health <= 0
+
+        if shouldRemove then
+
+            if cache.CornerBoxes[model] then
+                for _, line in ipairs(cache.CornerBoxes[model]) do
+                    if line.Remove then line:Remove() end
+                end
+                cache.CornerBoxes[model] = nil
+            end
+
+            if cache.Skeletons[model] then
+                for _, line in ipairs(cache.Skeletons[model]) do
+                    if line.Remove then line:Remove() end
+                end
+                cache.Skeletons[model] = nil
+            end
+
+            if cache.HealthBars[model] then
+                local bar = cache.HealthBars[model]
+                if bar.background and bar.background.Remove then bar.background:Remove() end
+                if bar.fill and bar.fill.Remove then bar.fill:Remove() end
+                if bar.segments then
+                    for _, segment in ipairs(bar.segments) do
+                        if segment and segment.Remove then segment:Remove() end
+                    end
+                end
+                cache.HealthBars[model] = nil
+            end
+
+            if cache.NameTags[model] then
+                if cache.NameTags[model].Remove then
+                    cache.NameTags[model]:Remove()
+                end
+                cache.NameTags[model] = nil
+            end
+        end
+    end
+
+    for model in pairs(cache.CornerBoxes) do
+        local root = model:FindFirstChild("HumanoidRootPart")
+        local humanoid = model:FindFirstChildOfClass("Humanoid")
+        if not root or not humanoid or not model:IsDescendantOf(workspace) or humanoid.Health <= 0 then
+            continue
+        end
+
+        local onScreen, screenPos = isOnScreenAndInDistance(root.Position)
+        if not onScreen then
+
+            updateSkeleton(model)
+            if cache.NameTags[model] then cache.NameTags[model].Visible = false end
+            if cache.HealthBars[model] then
+                if cache.HealthBars[model].background then
+                    cache.HealthBars[model].background.Visible = false
+                end
+                if cache.HealthBars[model].fill then
+                    cache.HealthBars[model].fill.Visible = false
+                end
+                if cache.HealthBars[model].segments then
+                    for _, segment in ipairs(cache.HealthBars[model].segments) do
+                        if segment then segment.Visible = false end
+                    end
+                end
+            end
+            for _, l in ipairs(cache.CornerBoxes[model]) do l.Visible = false end
+            continue
+        end
+
+        local cf, size = model:GetBoundingBox()
+        local halfHeight = size.Y / 2
+        local topVec3 = cf.Position + Vector3.new(0, halfHeight, 0)
+        local bottomVec3 = cf.Position - Vector3.new(0, halfHeight, 0)
+
+        local topVec2 = camera:WorldToViewportPoint(topVec3)
+        local bottomVec2 = camera:WorldToViewportPoint(bottomVec3)
+
+        local boxCenter = screenPos
+        local boxHeight = math.abs(topVec2.Y - bottomVec2.Y)
+        local boxWidth = boxHeight / 2
+
+        updateSkeleton(model)
+        updateCornerBoxes(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
+        updateHealthbar(model, topVec2, bottomVec2, boxCenter, boxWidth, humanoid)
+        updateNametag(model, topVec2, boxCenter)
+        updateColors()
+    end
+end)
 
 return {
     espSettings = espSettings,
