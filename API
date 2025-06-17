@@ -3,6 +3,7 @@ local viewportSize = camera.ViewportSize
 local screenCenter = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
 
 local espSettings = {
+    maxDistance = 1000,
     Boxes = false,
     CornerBoxes = false,
     Snaplines = false,
@@ -288,6 +289,137 @@ local function removeSnapline(model)
     end
 end
 
+local espModels = {}
+local lastCleanup = 0
+local cleanupInterval = 0.25
+
+local function createESPBox(model)
+	for _, tracked in ipairs(espModels) do
+		if tracked.model == model then return end
+	end
+
+	local lines = {}
+	for i = 1, 8 do
+		local line = Drawing.new("Line")
+		line.Thickness = 2
+		line.Color = espLib.espColors.CornerBoxes
+		line.Visible = false
+		table.insert(lines, line)
+	end
+
+	table.insert(espModels, {
+		model = model,
+		lines = lines,
+	})
+end
+
+local function removeESPBox(model)
+    for i = #espModels, 1, -1 do
+        if espModels[i].model == model then
+            for _, line in ipairs(espModels[i].lines) do
+                if line and line.Remove then
+                    line:Remove()
+                end
+            end
+            table.remove(espModels, i)
+            break
+        end
+    end
+end
+
+local function moveAway(point, center, amount)
+	local dir = (point - center)
+	if dir.Magnitude == 0 then return point end
+	return point + dir.Unit * amount
+end
+
+local function updateCornerBoxes()
+	local camera = workspace.CurrentCamera
+	local now = tick()
+
+	if now - lastCleanup >= cleanupInterval then
+		for i = #espModels, 1, -1 do
+			local model = espModels[i].model
+			if not model or not model:IsDescendantOf(workspace) then
+				for _, line in ipairs(espModels[i].lines) do
+					line:Remove()
+				end
+				table.remove(espModels, i)
+			end
+		end
+		lastCleanup = now
+	end
+
+	for _, esp in ipairs(espModels) do
+		local model = esp.model
+		local lines = esp.lines
+		local root = model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+
+		if not root or not root:IsDescendantOf(workspace) then
+			continue
+		end
+
+		local screenPos, onScreen = camera:WorldToViewportPoint(root.Position)
+		local distance = (camera.CFrame.Position - root.Position).Magnitude
+
+		if not onScreen or distance > espLib.espSettings.maxDistance or not espLib.espSettings.CornerBoxes then
+			for _, line in ipairs(lines) do
+				line.Visible = false
+			end
+			continue
+		end
+
+		local topVec = camera:WorldToViewportPoint(root.Position + Vector3.new(0, 2.6, 0))
+		local bottomVec = camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
+
+		local boxHeight = math.abs(topVec.Y - bottomVec.Y)
+		local boxWidth = boxHeight * 0.6
+		local center = Vector2.new(screenPos.X, screenPos.Y)
+		local boxSize = Vector2.new(boxWidth, boxHeight)
+
+		local topLeft = moveAway(Vector2.new(center.X - boxWidth / 2, center.Y - boxHeight / 2), center, 4)
+		local topRight = moveAway(Vector2.new(center.X + boxWidth / 2, center.Y - boxHeight / 2), center, 4)
+		local bottomLeft = moveAway(Vector2.new(center.X - boxWidth / 2, center.Y + boxHeight / 2), center, 4)
+		local bottomRight = moveAway(Vector2.new(center.X + boxWidth / 2, center.Y + boxHeight / 2), center, 4)
+
+		local minSide = math.min(boxWidth, boxHeight)
+		local lineLength = math.clamp(minSide * 0.2, 2, math.max(2, minSide * 0.45))
+		local thickness = math.clamp(boxSize.X / 100, 1, 2)
+
+		lines[1].From = topLeft
+		lines[1].To = topLeft + Vector2.new(lineLength, 0)
+
+		lines[2].From = topLeft
+		lines[2].To = topLeft + Vector2.new(0, lineLength)
+
+		lines[3].From = topRight
+		lines[3].To = topRight - Vector2.new(lineLength, 0)
+
+		lines[4].From = topRight
+		lines[4].To = topRight + Vector2.new(0, lineLength)
+
+		lines[5].From = bottomLeft
+		lines[5].To = bottomLeft + Vector2.new(lineLength, 0)
+
+		lines[6].From = bottomLeft
+		lines[6].To = bottomLeft - Vector2.new(0, lineLength)
+
+		lines[7].From = bottomRight
+		lines[7].To = bottomRight - Vector2.new(lineLength, 0)
+
+		lines[8].From = bottomRight
+		lines[8].To = bottomRight - Vector2.new(0, lineLength)
+
+		for _, line in ipairs(lines) do
+			line.Visible = true
+			line.Thickness = thickness
+			line.Color = espLib.espColors.CornerBoxes
+		end
+	end
+end
+
+game:GetService("RunService").RenderStepped:Connect(updateCornerBoxes)
+
 return {
     espSettings = espSettings,
     transparencySettings = transparencySettings,
@@ -299,4 +431,6 @@ return {
     createChams = createChams,
     chamsTween = chamsTween,
     removeSnapline = removeSnapline,
+    createESPBox = createESPBox,
+    removeESPBox = removeESPBox,
 }
