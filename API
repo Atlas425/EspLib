@@ -2,6 +2,7 @@ local camera = game:GetService("Workspace").CurrentCamera
 local viewportSize = camera.ViewportSize
 local screenCenter = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
 
+local customNames = {}
 local lastDrawings = {}
 local SEGMENT_COUNT = 50
 
@@ -557,7 +558,7 @@ local function updateNametag(model, topVec, boxCenter)
     local tag = cache.NameTags[model]
     if not tag then return end
 
-    tag.Text = model.Name
+    tag.Text = customNames[model] or model.Name
     local yOffset = topVec.Y - 25
     tag.Position = Vector2.new(boxCenter.X - tag.TextBounds.X/2, yOffset)
     tag.Visible = true
