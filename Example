@@ -49,7 +49,7 @@ espLib.drawSnaplines(model, mousePos, modelPos) --Draws snapline from center of 
 espLib.drawCircle(false) --Draws simple fov circle based on configuration settings.
 espLib.drawFOVCircle(true) --Updates any existing circles radius and position to espsettings radius. (Useful if window size changes, or you want to change fov circle radius)
 
-table.insert(chamsExclusionList, game.Workspace.TargetModel.LeftArm) --Excludes this part from being created in chams
+table.insert(chamsExclusionList, game.Workspace.TargetModel.LeftArm.Name) --Excludes this part from being created in chams
 espLib.createChams(game.Workspace.TargetModel) --Creates chams based on settings for every single basepart found in TargetModel. A basepart can also be passed to this function.
 
 
