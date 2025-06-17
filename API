@@ -730,5 +730,6 @@ return {
     removeSnapline = removeSnapline,
     createESPBox = createESPBox,
     removeESPBox = removeESPBox,
-    TrackModel = TrackModel,
+    trackModel = TrackModel,
+    customNames = customNames,
 }
