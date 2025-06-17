@@ -233,7 +233,7 @@ local function drawSnaplines(model, from, to)
 end
 
 local function isExcluded(partName)
-	for _, name in ipairs(espLib.chamsExclusionList) do
+	for _, name in ipairs(chamsExclusionList) do
 		if name == partName then
 			return true
 		end
