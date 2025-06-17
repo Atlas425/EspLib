@@ -564,7 +564,7 @@ local function updateNametag(model, topVec, boxCenter)
     tag.Color = espColors.Nametags
 end
 
-function espLib:TrackModel(model)
+function TrackModel(model)
     if not model:IsA("Model") then return end
     if cache.CornerBoxes[model] then return end
 
