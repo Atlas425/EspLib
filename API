@@ -538,14 +538,15 @@ local function updateCornerBoxes(model, topVec, bottomVec, boxCenter, boxWidth, 
 end
 
 local function getGradientColor(t)
-    if t < 0.35 then
-        return Color3.fromRGB(0, 255, 0):Lerp(Color3.fromRGB(255, 255, 0), t * 2)
-    elseif t < 0.85 then
-        return Color3.fromRGB(255, 255, 0):Lerp(Color3.fromRGB(255, 0, 0), (t - 0.5) / 0.35)
+    if t < 0.5 then
+        local alpha = t / 0.5
+        return Color3.fromRGB(0, 255, 0):Lerp(Color3.fromRGB(255, 255, 0), alpha)
     else
-        return Color3.fromRGB(255, 0, 0)
+        local alpha = (t - 0.5) / 0.5
+        return Color3.fromRGB(255, 255, 0):Lerp(Color3.fromRGB(255, 0, 0), alpha)
     end
 end
+
 
 local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, humanoid)
     if not espSettings.Healthbar then
