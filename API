@@ -302,7 +302,7 @@ local function createESPBox(model)
 	for i = 1, 8 do
 		local line = Drawing.new("Line")
 		line.Thickness = 2
-		line.Color = espLib.espColors.CornerBoxes
+		line.Color = espColors.CornerBoxes
 		line.Visible = false
 		table.insert(lines, line)
 	end
@@ -362,7 +362,7 @@ local function updateCornerBoxes()
 		local screenPos, onScreen = camera:WorldToViewportPoint(root.Position)
 		local distance = (camera.CFrame.Position - root.Position).Magnitude
 
-		if not onScreen or distance > espLib.espSettings.maxDistance or not espLib.espSettings.CornerBoxes then
+		if not onScreen or distance > espSettings.maxDistance or not espSettings.CornerBoxes then
 			for _, line in ipairs(lines) do
 				line.Visible = false
 			end
@@ -413,7 +413,7 @@ local function updateCornerBoxes()
 		for _, line in ipairs(lines) do
 			line.Visible = true
 			line.Thickness = thickness
-			line.Color = espLib.espColors.CornerBoxes
+			line.Color = espColors.CornerBoxes
 		end
 	end
 end
