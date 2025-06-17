@@ -314,7 +314,7 @@ local function createChams(part)
 		if part:IsA("Model") then
 			local chamsList = {}
 			
-			for i, p in pairs(part:GetDescendants()) do
+			for i, p in pairs(part:GetChildren()) do
 				if not checkValidPart(p) then continue end
 				local chams = Instance.new("BoxHandleAdornment")
 				chams.Transparency = 0.5
