@@ -754,13 +754,8 @@ game:GetService("RunService").RenderStepped:Connect(function()
 
             if cache.HealthBars[model] then
                 local bar = cache.HealthBars[model]
-                if bar.background and bar.background.Remove then bar.background:Remove() end
-                if bar.fill and bar.fill.Remove then bar.fill:Remove() end
-                if bar.segments then
-                    for _, segment in ipairs(bar.segments) do
-                        if segment and segment.Remove then segment:Remove() end
-                    end
-                end
+                if bar.Background and bar.Background.Remove then bar.Background:Remove() end
+                if bar.Foreground and bar.Foreground.Remove then bar.Foreground:Remove() end
                 cache.HealthBars[model] = nil
             end
 
@@ -786,16 +781,11 @@ game:GetService("RunService").RenderStepped:Connect(function()
             updateSkeleton(model)
             if cache.NameTags[model] then cache.NameTags[model].Visible = false end
             if cache.HealthBars[model] then
-                if cache.HealthBars[model].background then
-                    cache.HealthBars[model].background.Visible = false
+                if cache.HealthBars[model].Background then
+                    cache.HealthBars[model].Background.Visible = false
                 end
-                if cache.HealthBars[model].fill then
-                    cache.HealthBars[model].fill.Visible = false
-                end
-                if cache.HealthBars[model].segments then
-                    for _, segment in ipairs(cache.HealthBars[model].segments) do
-                        if segment then segment.Visible = false end
-                    end
+                if cache.HealthBars[model].Foreground then
+                    cache.HealthBars[model].Foreground.Visible = false
                 end
 		if cache.FillBoxes[model] then
 	   	    cache.FillBoxes[model].Visible = false
