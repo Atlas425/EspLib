@@ -556,11 +556,6 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
             if cache.HealthBars[model].background then
                 cache.HealthBars[model].background.Visible = false
             end
-            if cache.HealthBars[model].outline then
-                for _, line in ipairs(cache.HealthBars[model].outline) do
-                    line.Visible = false
-                end
-            end
         end
         return
     end
@@ -572,24 +567,11 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
         if cache.HealthBars[model].background and cache.HealthBars[model].background.Remove then
             cache.HealthBars[model].background:Remove()
         end
-        if cache.HealthBars[model].outline then
-            for _, line in ipairs(cache.HealthBars[model].outline) do
-                if line and line.Remove then
-                    line:Remove()
-                end
-            end
-        end
     end
 
     cache.HealthBars[model] = {
         segments = {},
-        background = Drawing.new("Line"),
-        outline = {
-            Drawing.new("Line"),
-            Drawing.new("Line"),
-            Drawing.new("Line"),
-            Drawing.new("Line")
-        }
+        background = Drawing.new("Line")
     }
 
     local bar = cache.HealthBars[model]
@@ -618,6 +600,7 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
     local missingHeight = (1 - healthRatio) * barHeight
     bar.background.From = Vector2.new(barLeftX, barTopY)
     bar.background.To = Vector2.new(barLeftX, barTopY + missingHeight)
+
     bar.background.Thickness = barThickness
     bar.background.Color = Color3.new(0.1, 0.1, 0.1)
     bar.background.ZIndex = 1
@@ -630,6 +613,7 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
             local segY1 = barTopY + (1 - t - 1 / SEGMENT_COUNT) * barHeight
             local segY2 = barTopY + (1 - t) * barHeight
 
+
             local from = Vector2.new(barLeftX, segY1)
             local to = Vector2.new(barLeftX, segY2)
 
@@ -639,31 +623,6 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
             segment.Color = getGradientColor(1 - t)
             segment.Visible = t < healthRatio
         end
-    end
-
-    local outlineThickness = 1
-    local barRightX = barLeftX + barThickness
-    local barBottomY = barTopY + barHeight
-
-    local topLine, bottomLine, leftLine, rightLine = unpack(bar.outline)
-
-    topLine.From = Vector2.new(barLeftX - outlineThickness, barTopY - outlineThickness)
-    topLine.To   = Vector2.new(barRightX + outlineThickness, barTopY - outlineThickness)
-
-    bottomLine.From = Vector2.new(barLeftX - outlineThickness, barBottomY + outlineThickness)
-    bottomLine.To   = Vector2.new(barRightX + outlineThickness, barBottomY + outlineThickness)
-
-    leftLine.From = Vector2.new(barLeftX - outlineThickness, barTopY - outlineThickness)
-    leftLine.To   = Vector2.new(barLeftX - outlineThickness, barBottomY + outlineThickness)
-
-    rightLine.From = Vector2.new(barRightX + outlineThickness, barTopY - outlineThickness)
-    rightLine.To   = Vector2.new(barRightX + outlineThickness, barBottomY + outlineThickness)
-
-    for _, line in ipairs(bar.outline) do
-        line.Thickness = outlineThickness
-        line.Color = Color3.new(0.3, 0.3, 0.3)
-        line.ZIndex = 0.5
-        line.Visible = true
     end
 end
 
