@@ -559,7 +559,7 @@ local function updateFillBox(model, topVec, bottomVec, boxCenter, boxWidth, boxH
     fillBox.Visible = true
 end
 
-local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, boxHeight, humanoid)
+local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, humanoid, boxHeight)
     local camera = workspace.CurrentCamera
 
     if not espSettings.Healthbar
