@@ -30,17 +30,17 @@ local espColors = {
     Snaplines = Color3.fromRGB(255, 0, 0),
     FillBoxes = Color3.fromRGB(255, 0, 0),
     FovCircle = Color3.fromRGB(255, 0, 0),
-    Skeleton = Color3.fromRGB(255, 0, 0),
-    Nametags = Color3.fromRGB(255, 0, 0),
+    Skeleton = Color3.fromRGB(255, 255, 255),
+    Nametags = Color3.fromRGB(255, 255, 255),
     TextLabels = Color3.fromRGB(255, 0, 0),
-    ChamsVis = Color3.fromRGB(255, 0, 0),
-    Chams = Color3.fromRGB(120, 150, 50),
+    ChamsVis = Color3.new(1.000000, 0.000000, 0.584314),
+    Chams = Color3.new(1.000000, 0.000000, 0.584314),
     ChamsTweenEnd = Color3.fromRGB(255, 0, 0),
 }
 
 local transparencySettings = {
     Chams = 0,
-    FillBoxes = 0.65,
+    FillBoxes = 0.25,
 }
 
 local cache = {
