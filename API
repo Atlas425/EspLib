@@ -537,6 +537,24 @@ local function updateCornerBoxes(model, topVec, bottomVec, boxCenter, boxWidth, 
     end
 end
 
+local function updateFillBox(model, topVec, bottomVec, boxCenter, boxWidth, boxHeight)
+    if not espSettings.FillBoxes then
+        if cache.FillBoxes[model] then
+            cache.FillBoxes[model].Visible = false
+        end
+        return
+    end
+
+    local fillBox = cache.FillBoxes[model]
+    if not fillBox then return end
+
+    fillBox.Position = Vector2.new(boxCenter.X - boxWidth / 2, topVec.Y)
+    fillBox.Size = Vector2.new(boxWidth, boxHeight)
+    fillBox.Color = espColors.FillBox
+    fillBox.Transparency = transparencySettings.FillBox
+    fillBox.Visible = true
+end
+
 local function getGradientColor(t)
     if t < 0.5 then
         local alpha = t / 0.5
@@ -719,6 +737,13 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 cache.CornerBoxes[model] = nil
             end
 
+	    if cache.FillBoxes[model] then
+		if cache.FillBoxes[model].Remove then
+		    cache.FillBoxes[model]:Remove()
+		end
+		cache.FillBoxes[model] = nil
+	    end
+
             if cache.Skeletons[model] then
                 for _, line in ipairs(cache.Skeletons[model]) do
                     if line.Remove then line:Remove() end
@@ -771,6 +796,9 @@ game:GetService("RunService").RenderStepped:Connect(function()
                         if segment then segment.Visible = false end
                     end
                 end
+		if cache.FillBoxes[model] then
+	   	    cache.FillBoxes[model].Visible = false
+		end
             end
             for _, l in ipairs(cache.CornerBoxes[model]) do l.Visible = false end
             continue
@@ -790,6 +818,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
 
         updateSkeleton(model)
         updateCornerBoxes(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
+	updateFillBox(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
         updateHealthbar(model, topVec2, bottomVec2, boxCenter, boxWidth, humanoid)
         updateNametag(model, topVec2, boxCenter)
         updateColors()
