@@ -560,14 +560,15 @@ local function updateFillBox(model, topVec, bottomVec, boxCenter, boxWidth, boxH
 end
 
 local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, humanoid)
-    if not espSettings.Healthbar then
+    if not espSettings.Healthbar or not model:IsDescendantOf(workspace) or not humanoid or humanoid.Health <= 0 then
         if cache.HealthBars[model] then
             if cache.HealthBars[model].Foreground then
-                cache.HealthBars[model].Foreground.Visible = false
+                cache.HealthBars[model].Foreground:Remove()
             end
             if cache.HealthBars[model].Background then
-                cache.HealthBars[model].Background.Visible = false
+                cache.HealthBars[model].Background:Remove()
             end
+            cache.HealthBars[model] = nil
         end
         return
     end
@@ -581,6 +582,7 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
         end
     end
 
+    -- Create new lines
     local background = Drawing.new("Line")
     local foreground = Drawing.new("Line")
 
@@ -591,16 +593,15 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
 
     local healthRatio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
 
-    local topVec2D = topVec
-    local bottomVec2D = bottomVec
-    local barHeight = bottomVec2D.Y - topVec2D.Y
-
+    local barHeight = bottomVec.Y - topVec.Y
     local barThickness = math.clamp(barHeight / 12.5, 1, 3)
     local outlineThickness = barThickness + 2
 
-    local barX = boxCenter.X - boxWidth / 2 - math.clamp(barHeight / 10, 8, 15)
-    local barYTop = topVec2D.Y
-    local barYBottom = bottomVec2D.Y
+    local xOffset = math.clamp(boxHeight / 10, 8, 15)
+
+    local barX = boxCenter.X - boxWidth / 2 - xOffset
+    local barYTop = topVec.Y
+    local barYBottom = bottomVec.Y
 
     background.From = Vector2.new(barX, barYTop)
     background.To = Vector2.new(barX, barYBottom)
