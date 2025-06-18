@@ -559,11 +559,15 @@ local function updateFillBox(model, topVec, bottomVec, boxCenter, boxWidth, boxH
     fillBox.Visible = true
 end
 
-local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, humanoid, boxHeight)
+local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, boxHeight, humanoid)
     local camera = workspace.CurrentCamera
-    local rootPart = model:FindFirstChild("HumanoidRootPart")
 
-    if not espSettings.Healthbar or not model:IsDescendantOf(workspace) or not humanoid or humanoid.Health <= 0 or not rootPart then
+    if not espSettings.Healthbar
+        or not model:IsDescendantOf(workspace)
+        or not humanoid
+        or humanoid.Health <= 0
+        or not camera:WorldToViewportPoint(model:GetPivot()).Z > 0
+    then
         if cache.HealthBars[model] then
             if cache.HealthBars[model].Foreground then
                 cache.HealthBars[model].Foreground:Remove()
@@ -577,17 +581,16 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
     end
 
     if cache.HealthBars[model] then
-        if cache.HealthBars[model].Foreground and cache.HealthBars[model].Foreground.Remove then
+        if cache.HealthBars[model].Foreground then
             cache.HealthBars[model].Foreground:Remove()
         end
-        if cache.HealthBars[model].Background and cache.HealthBars[model].Background.Remove then
+        if cache.HealthBars[model].Background then
             cache.HealthBars[model].Background:Remove()
         end
     end
 
     local background = Drawing.new("Line")
     local foreground = Drawing.new("Line")
-
     cache.HealthBars[model] = {
         Background = background,
         Foreground = foreground
@@ -595,17 +598,15 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
 
     local healthRatio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
 
-    local distance = (camera.CFrame.Position - rootPart.Position).Magnitude
-    local scaleFactor = 1 / distance -- inverse distance
-    local dynamicOffset = math.clamp(boxWidth * 0.6 * scaleFactor * 100, 6, 12)
+    local xOffset = math.clamp(boxWidth * 0.2, 4, 10) -- consistent offset at all distances
 
-    local barHeight = bottomVec.Y - topVec.Y
-    local barThickness = math.clamp(barHeight / 12.5, 1, 3)
-    local outlineThickness = barThickness + 2
-
-    local barX = boxCenter.X - boxWidth / 2 - dynamicOffset
+    local barX = boxCenter.X - boxWidth / 2 - xOffset
     local barYTop = topVec.Y
     local barYBottom = bottomVec.Y
+    local barHeight = barYBottom - barYTop
+
+    local barThickness = math.clamp(barHeight / 12.5, 1, 3)
+    local outlineThickness = barThickness + 2
 
     background.From = Vector2.new(barX, barYTop)
     background.To = Vector2.new(barX, barYBottom)
@@ -615,7 +616,7 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
     background.Visible = true
 
     local padding = barThickness * 0.5
-    local filledHeight = (barYBottom - barYTop - padding * 2) * healthRatio
+    local filledHeight = (barHeight - padding * 2) * healthRatio
     local filledTop = barYBottom - padding - filledHeight
     local filledBottom = barYBottom - padding
 
