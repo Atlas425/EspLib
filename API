@@ -9,6 +9,7 @@ local SEGMENT_COUNT = 50
 
 local espSettings = {
     MaxDistance = 1000,
+    TextSize = 8,
     Boxes = false,
     FillBoxes = false,
     CornerBoxes = false,
@@ -388,8 +389,8 @@ end
 local function createText()
     local text = Drawing.new("Text")
     text.Visible = false
-    text.Size = 14
-    text.Color = Color3.fromRGB(255, 255, 255)
+    text.Size = espSettings.TextSize
+    text.Color = espColors.Nametags
     text.Outline = true
     return text
 end
@@ -654,6 +655,8 @@ local function updateNametag(model, topVec, bottomVec, boxCenter)
     if not tag then return end
 
     tag.Text = customNames[model] or model.Name
+    tag.Size = espSettings.TextSize
+    tag.Font = espSettings.Font
 
     local boxHeight = bottomVec.Y - topVec.Y
 
@@ -679,7 +682,7 @@ function TrackModel(model)
     }
 
     cache.NameTags[model] = createText()
-    cache.NameTags[model].Size = 16
+    cache.NameTags[model].Size = espSettings.TextSize
     cache.NameTags[model].Center = false
 
     cache.Skeletons[model] = {}
