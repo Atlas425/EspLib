@@ -559,7 +559,7 @@ local function updateFillBox(model, topVec, bottomVec, boxCenter, boxWidth, boxH
     fillBox.Visible = true
 end
 
-local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, humanoid)
+local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, humanoid, boxHeight)
     if not espSettings.Healthbar or not model:IsDescendantOf(workspace) or not humanoid or humanoid.Health <= 0 then
         if cache.HealthBars[model] then
             if cache.HealthBars[model].Foreground then
@@ -816,7 +816,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
         updateSkeleton(model)
         updateCornerBoxes(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
 	updateFillBox(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
-        updateHealthbar(model, topVec2, bottomVec2, boxCenter, boxWidth, humanoid)
+        updateHealthbar(model, topVec2, bottomVec2, boxCenter, boxWidth, humanoid, boxHeight)
         updateNametag(model, topVec2, bottomVec2, boxCenter)
         updateColors()
     end
