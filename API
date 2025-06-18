@@ -397,7 +397,7 @@ end
 local function isOnScreenAndInDistance(rootPos)
     local screenPos, onScreen = camera:WorldToViewportPoint(rootPos)
     local distance = (camera.CFrame.Position - rootPos).Magnitude
-    return onScreen and distance <= espSettings.maxDistance, screenPos
+    return onScreen and distance <= espSettings.MaxDistance, screenPos
 end
 
 local function updateSkeleton(model)
