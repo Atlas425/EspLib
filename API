@@ -642,7 +642,7 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
     end
 end
 
-local function updateNametag(model, topVec, boxCenter)
+local function updateNametag(model, topVec, bottomVec, boxCenter)
     if not espSettings.Nametags then
         if cache.NameTags[model] then
             cache.NameTags[model].Visible = false
@@ -654,8 +654,14 @@ local function updateNametag(model, topVec, boxCenter)
     if not tag then return end
 
     tag.Text = customNames[model] or model.Name
-    local yOffset = topVec.Y - 25
-    tag.Position = Vector2.new(boxCenter.X - tag.TextBounds.X/2, yOffset)
+
+    local boxHeight = bottomVec.Y - topVec.Y
+
+    local textHeight = tag.TextBounds.Y
+    local padding = 2
+    local tagY = topVec.Y - textHeight
+
+    tag.Position = Vector2.new(boxCenter.X - tag.TextBounds.X / 2, tagY)
     tag.Visible = true
     tag.Color = espColors.Nametags
 end
@@ -832,7 +838,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
         updateCornerBoxes(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
 	updateFillBox(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
         updateHealthbar(model, topVec2, bottomVec2, boxCenter, boxWidth, humanoid)
-        updateNametag(model, topVec2, boxCenter)
+        updateNametag(model, topVec2, bottomVec2, boxCenter)
         updateColors()
     end
 end)
