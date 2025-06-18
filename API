@@ -553,8 +553,8 @@ local function updateFillBox(model, topVec, bottomVec, boxCenter, boxWidth, boxH
 
     fillBox.Position = Vector2.new(boxCenter.X - boxWidth / 2, topVec.Y)
     fillBox.Size = Vector2.new(boxWidth, boxHeight)
-    fillBox.Color = espColors.FillBox
-    fillBox.Transparency = transparencySettings.FillBox
+    fillBox.Color = espColors.FillBoxes
+    fillBox.Transparency = transparencySettings.FillBoxes
     fillBox.Visible = true
 end
 
