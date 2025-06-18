@@ -823,8 +823,10 @@ game:GetService("RunService").RenderStepped:Connect(function()
         local bottomVec2 = camera:WorldToViewportPoint(bottomVec3)
 
         local boxCenter = screenPos
-        local boxHeight = math.abs(topVec2.Y - bottomVec2.Y)
-        local boxWidth = boxHeight / 2
+        local scaleFactor = 1.25
+	local boxHeight = math.abs(topVec2.Y - bottomVec2.Y) * scaleFactor
+	local boxWidth = (boxHeight / 2) * scaleFactor
+
 
         updateSkeleton(model)
         updateCornerBoxes(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
