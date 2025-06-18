@@ -682,6 +682,13 @@ function TrackModel(model)
     cache.NameTags[model].Center = false
 
     cache.Skeletons[model] = {}
+
+    local fill = Drawing.new("Square")
+    fill.Filled = true
+    fill.Visible = false
+    fill.Color = espColors.FillBoxes
+    fill.Transparency = transparencySettings.FillBoxes
+    cache.FillBoxes[model] = fill
 end
 
 local function updateColors()
