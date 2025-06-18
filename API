@@ -8,8 +8,9 @@ local lastDrawings = {}
 local SEGMENT_COUNT = 50
 
 local espSettings = {
-    maxDistance = 1000,
+    MaxDistance = 1000,
     Boxes = false,
+    FillBoxes = false,
     CornerBoxes = false,
     Snaplines = false,
     FovCircle = false,
@@ -26,6 +27,7 @@ local espColors = {
     Boxes = Color3.fromRGB(255, 0, 0),
     CornerBoxes = Color3.fromRGB(255, 0, 0),
     Snaplines = Color3.fromRGB(255, 0, 0),
+    FillBoxes = Color3.fromRGB(255, 0, 0),
     FovCircle = Color3.fromRGB(255, 0, 0),
     Skeleton = Color3.fromRGB(255, 0, 0),
     Nametags = Color3.fromRGB(255, 0, 0),
@@ -37,7 +39,7 @@ local espColors = {
 
 local transparencySettings = {
     Chams = 0,
-
+    FillBoxes = 0.65,
 }
 
 local cache = {
