@@ -45,6 +45,7 @@ local transparencySettings = {
 local cache = {
 	CornerBoxes = {},
 	Boxes = {},
+        FillBoxes = {},
 	Chams = {},
 	Snaplines = {},
 	NameTags = {},
