@@ -5,7 +5,6 @@ local screenCenter = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
 local chamsExclusionList = {}
 local customNames = {}
 local lastDrawings = {}
-local SEGMENT_COUNT = 50
 
 local espSettings = {
     MaxDistance = 1000,
@@ -19,8 +18,8 @@ local espSettings = {
     Nametags = false,
     Healthbar = false,
     Chams = false,
+    HeadDots = false,
     Font = Enum.Font.RobotoCondensed,
-    ChamsAlwaysOnTop = true,
     FovRadius = 90,
 }
 
@@ -28,7 +27,7 @@ local espColors = {
     Boxes = Color3.fromRGB(255, 0, 0),
     CornerBoxes = Color3.fromRGB(255, 0, 0),
     Snaplines = Color3.fromRGB(255, 0, 0),
-    FillBoxes = Color3.fromRGB(255, 0, 0),
+    FillBoxes = Color3.fromRGB(25, 35, 55),
     FovCircle = Color3.fromRGB(255, 0, 0),
     Skeleton = Color3.fromRGB(255, 255, 255),
     Nametags = Color3.fromRGB(255, 255, 255),
@@ -36,17 +35,19 @@ local espColors = {
     ChamsVis = Color3.new(1.000000, 0.000000, 0.584314),
     Chams = Color3.new(1.000000, 0.000000, 0.584314),
     ChamsTweenEnd = Color3.fromRGB(255, 0, 0),
+    HeadDot = Color3.fromRGB(255, 255, 255),
 }
 
 local transparencySettings = {
     Chams = 0,
     FillBoxes = 0.25,
+    HeadDot = 0.5,
 }
 
 local cache = {
 	CornerBoxes = {},
 	Boxes = {},
-        FillBoxes = {},
+    FillBoxes = {},
 	Chams = {},
 	Snaplines = {},
 	NameTags = {},
@@ -54,7 +55,8 @@ local cache = {
 	FontElements = {},
 	DisplayBoxes = {},
 	FovDrawings = {},
-        Skeletons = {},
+    Skeletons = {},
+    HeadDots = {},
 }
 
 local function FindFirstDescendantOfClass(parent, className)
@@ -600,7 +602,7 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
 
     local healthRatio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
 
-    local xOffset = math.clamp(boxWidth * 0.2, 4, 10) -- consistent offset at all distances
+    local xOffset = math.clamp(boxWidth * 0.2, 4, 10)
 
     local barX = boxCenter.X - boxWidth / 2 - xOffset
     local barYTop = topVec.Y
@@ -628,6 +630,54 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
     foreground.Color = Color3.new(0, 1, 0)
     foreground.ZIndex = 2
     foreground.Visible = true
+end
+
+local function updateHeadDot(model, topVec, bottomVec, boxCenter)
+    if not espSettings.HeadDots then
+        if cache.HeadDots[model] then
+            cache.HeadDots[model].Visible = false
+        end
+        return
+    end
+
+    local dot = cache.HeadDots[model]
+    if not dot then return end
+
+    local head = model:FindFirstChild("Head")
+    if not head or not head:IsA("BasePart") then
+        dot.Visible = false
+        return
+    end
+
+    local headCenter, onScreen = camera:WorldToViewportPoint(head.Position)
+    if not onScreen then
+        dot.Visible = false
+        return
+    end
+
+    local headRightWorld = head.Position + head.CFrame.RightVector * (head.Size.X / 2)
+    local headLeftWorld  = head.Position - head.CFrame.RightVector * (head.Size.X / 2)
+
+    local headTopWorld    = head.Position + head.CFrame.UpVector * (head.Size.Y / 2)
+    local headBottomWorld = head.Position - head.CFrame.UpVector * (head.Size.Y / 2)
+
+    local headRight2D  = camera:WorldToViewportPoint(headRightWorld)
+    local headLeft2D   = camera:WorldToViewportPoint(headLeftWorld)
+    local headTop2D    = camera:WorldToViewportPoint(headTopWorld)
+    local headBottom2D = camera:WorldToViewportPoint(headBottomWorld)
+
+    local horizSize = (Vector2.new(headRight2D.X, headRight2D.Y) - Vector2.new(headLeft2D.X, headLeft2D.Y)).Magnitude / 2
+    local vertSize  = (Vector2.new(headTop2D.X, headTop2D.Y) - Vector2.new(headBottom2D.X, headBottom2D.Y)).Magnitude / 2
+
+    local screenRadius = math.max(horizSize, vertSize)
+
+    dot.Position = Vector2.new(headCenter.X, headCenter.Y)
+    dot.Radius = screenRadius
+    dot.Filled = false
+    dot.Thickness = 1.5
+    dot.Color = espColors.HeadDot
+    dot.Transparency = transparencySettings.HeadDot
+    dot.Visible = true
 end
 
 local function updateNametag(model, topVec, bottomVec, boxCenter)
@@ -680,6 +730,13 @@ function TrackModel(model)
     fill.Color = espColors.FillBoxes
     fill.Transparency = transparencySettings.FillBoxes
     cache.FillBoxes[model] = fill
+
+    local headDot = Drawing.new("Circle")
+    headDot.Visible = false
+    headDot.Color = espColors.HeadDot
+    headDot.Transparency = transparencySettings.HeadDot
+    headDot.NumSides = 50
+    cache.HeadDots[model] = headDot
 end
 
 local function updateColors()
@@ -712,7 +769,6 @@ local function updateColors()
 end
 
 game:GetService("RunService").RenderStepped:Connect(function()
-
     for _, drawing in ipairs(lastDrawings) do
         if drawing and drawing.Remove then
             drawing:Remove()
@@ -723,14 +779,9 @@ game:GetService("RunService").RenderStepped:Connect(function()
     for model, _ in pairs(cache.CornerBoxes) do
         local humanoid = model:FindFirstChildOfClass("Humanoid")
         local root = model:FindFirstChild("HumanoidRootPart")
-
-        local shouldRemove = not model:IsDescendantOf(workspace)
-            or not humanoid
-            or not root
-            or humanoid.Health <= 0
+        local shouldRemove = not model:IsDescendantOf(workspace) or not humanoid or not root or humanoid.Health <= 0
 
         if shouldRemove then
-
             if cache.CornerBoxes[model] then
                 for _, line in ipairs(cache.CornerBoxes[model]) do
                     if line.Remove then line:Remove() end
@@ -738,12 +789,15 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 cache.CornerBoxes[model] = nil
             end
 
-	    if cache.FillBoxes[model] then
-		if cache.FillBoxes[model].Remove then
-		    cache.FillBoxes[model]:Remove()
-		end
-		cache.FillBoxes[model] = nil
-	    end
+            if cache.FillBoxes[model] then
+                if cache.FillBoxes[model].Remove then cache.FillBoxes[model]:Remove() end
+                cache.FillBoxes[model] = nil
+            end
+
+            if cache.HeadDots[model] then
+                if cache.HeadDots[model].Remove then cache.HeadDots[model]:Remove() end
+                cache.HeadDots[model] = nil
+            end
 
             if cache.Skeletons[model] then
                 for _, line in ipairs(cache.Skeletons[model]) do
@@ -760,65 +814,86 @@ game:GetService("RunService").RenderStepped:Connect(function()
             end
 
             if cache.NameTags[model] then
-                if cache.NameTags[model].Remove then
-                    cache.NameTags[model]:Remove()
-                end
+                if cache.NameTags[model].Remove then cache.NameTags[model]:Remove() end
                 cache.NameTags[model] = nil
             end
         end
     end
 
-    for model in pairs(cache.CornerBoxes) do
+    for model, _ in pairs(cache.CornerBoxes) do
         local root = model:FindFirstChild("HumanoidRootPart")
         local humanoid = model:FindFirstChildOfClass("Humanoid")
-        if not root or not humanoid or not model:IsDescendantOf(workspace) or humanoid.Health <= 0 then
+        local head = model:FindFirstChild("Head")
+
+        if not root or not humanoid or not head or not model:IsDescendantOf(workspace) or humanoid.Health <= 0 then
             continue
         end
 
         local onScreen, screenPos = isOnScreenAndInDistance(root.Position)
         if not onScreen then
-
-            updateSkeleton(model)
             if cache.NameTags[model] then cache.NameTags[model].Visible = false end
+
             if cache.HealthBars[model] then
-                if cache.HealthBars[model].Background then
-                    cache.HealthBars[model].Background.Visible = false
-                end
-                if cache.HealthBars[model].Foreground then
-                    cache.HealthBars[model].Foreground.Visible = false
-                end
-		if cache.FillBoxes[model] then
-	   	    cache.FillBoxes[model].Visible = false
-		end
+                if cache.HealthBars[model].Background then cache.HealthBars[model].Background.Visible = false end
+                if cache.HealthBars[model].Foreground then cache.HealthBars[model].Foreground.Visible = false end
             end
-            for _, l in ipairs(cache.CornerBoxes[model]) do l.Visible = false end
+
+            if cache.FillBoxes[model] then
+                cache.FillBoxes[model].Visible = false
+            end
+
+            if cache.HeadDots[model] then
+                cache.HeadDots[model].Visible = false
+            end
+
+            if cache.CornerBoxes[model] then
+                for _, l in ipairs(cache.CornerBoxes[model]) do
+                    l.Visible = false
+                end
+            end
+
+            if cache.Skeletons[model] then
+                for _, l in ipairs(cache.Skeletons[model]) do
+                    l.Visible = false
+                end
+            end
+
             continue
         end
 
-        local cf, size = model:GetBoundingBox()
-        local halfHeight = size.Y / 2
-        local topVec3 = cf.Position + Vector3.new(0, halfHeight, 0)
-        local bottomVec3 = cf.Position - Vector3.new(0, halfHeight, 0)
+        local topVec3 = head.Position + head.CFrame.UpVector * (head.Size.Y / 2)
+
+        local lowestY = root.Position.Y
+        for _, part in ipairs(model:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                if part.Position.Y < lowestY then
+                    lowestY = part.Position.Y
+                end
+            end
+        end
+
+        local bottomVec3 = Vector3.new(root.Position.X, lowestY, root.Position.Z)
 
         local topVec2 = camera:WorldToViewportPoint(topVec3)
         local bottomVec2 = camera:WorldToViewportPoint(bottomVec3)
+        local screenPos = camera:WorldToViewportPoint(root.Position)
 
+        local scaleFactor = 1.7
+        local originalHeight = math.abs(topVec2.Y - bottomVec2.Y)
+        local centerY = (topVec2.Y + bottomVec2.Y) / 2
+        local boxHeight = originalHeight * scaleFactor
+        local boxWidth = ((boxHeight / 2) * scaleFactor) * 0.75
+
+        topVec2 = Vector3.new(topVec2.X, centerY - boxHeight / 2, 0)
+        bottomVec2 = Vector3.new(bottomVec2.X, centerY + boxHeight / 2, 0)
         local boxCenter = screenPos
-        local scaleFactor = 1.25
-	
-	local originalHeight = math.abs(topVec2.Y - bottomVec2.Y)
-	local centerY = (topVec2.Y + bottomVec2.Y) / 2
-	local boxHeight = originalHeight * scaleFactor
-	local boxWidth = (boxHeight / 2) * scaleFactor
-	
-	topVec2 = Vector3.new(topVec2.X, centerY - boxHeight / 2, 0)
-	bottomVec2 = Vector3.new(bottomVec2.X, centerY + boxHeight / 2, 0)
 
         updateSkeleton(model)
         updateCornerBoxes(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
-	updateFillBox(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
+        updateFillBox(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
         updateHealthbar(model, topVec2, bottomVec2, boxCenter, boxWidth, humanoid, boxHeight)
         updateNametag(model, topVec2, bottomVec2, boxCenter)
+        updateHeadDot(model, topVec2, bottomVec2, boxCenter)
         updateColors()
     end
 end)
