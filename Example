@@ -39,8 +39,6 @@ Functions:
     createChams = createChams,
     chamsTween = chamsTween,
     removeSnapline = removeSnapline,
-    createBox = createESPBox,
-    removeBox = removeESPBox,
     trackModel = TrackModel,
     customNames = customNames,
 -------------------------------------------
