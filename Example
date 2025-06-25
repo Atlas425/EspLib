@@ -11,15 +11,22 @@ espLib.addDisplayBox(game.Workspace.TargetModel, textTable) -- Creates a billboa
 --No primary part is needed for this because it creates a center part as the billboard adornee in the middle of the model, so any model is valid.
 
 local espSettings = {
+    MaxDistance = 1000, --doesn't work for chams/skeleton lines, will fix in future when i come back to this project
+    TextSize = 8,
     Boxes = false,
+    FillBoxes = false,
     CornerBoxes = false,
     Snaplines = false,
     FovCircle = false,
     Skeleton = false,
     Nametags = false,
+    Healthbar = false,
+    Chams = false,
+    HeadDots = false,
     Font = Enum.Font.RobotoCondensed,
-    ChamsAlwaysOnTop = true,
+    FovRadius = 90,
 }
+
 
 Functions:
     espSettings = espSettings,
