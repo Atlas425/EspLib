@@ -768,12 +768,13 @@ local function updateColors()
     end
 end
 
+local frameCounter = 0
+
 game:GetService("RunService").RenderStepped:Connect(function()
-    for _, drawing in ipairs(lastDrawings) do
-        if drawing and drawing.Remove then
-            drawing:Remove()
-        end
-    end
+    frameCounter += 1
+    local updateSkeletons = frameCounter % 2 == 0
+    local updateHealth = true -- can throttle later
+
     table.clear(lastDrawings)
 
     for model, _ in pairs(cache.CornerBoxes) do
@@ -782,41 +783,35 @@ game:GetService("RunService").RenderStepped:Connect(function()
         local shouldRemove = not model:IsDescendantOf(workspace) or not humanoid or not root or humanoid.Health <= 0
 
         if shouldRemove then
-            if cache.CornerBoxes[model] then
-                for _, line in ipairs(cache.CornerBoxes[model]) do
-                    if line.Remove then line:Remove() end
+
+            local function removeAll(t)
+                if not t then return end
+                if typeof(t) == "table" then
+                    for _, v in pairs(t) do
+                        if typeof(v) == "table" then
+                            for _, sub in pairs(v) do if sub.Remove then sub:Remove() end end
+                        elseif v and v.Remove then
+                            v:Remove()
+                        end
+                    end
+                elseif t.Remove then
+                    t:Remove()
                 end
-                cache.CornerBoxes[model] = nil
             end
 
-            if cache.FillBoxes[model] then
-                if cache.FillBoxes[model].Remove then cache.FillBoxes[model]:Remove() end
-                cache.FillBoxes[model] = nil
-            end
+            removeAll(cache.CornerBoxes[model])
+            removeAll(cache.FillBoxes[model])
+            removeAll(cache.HeadDots[model])
+            removeAll(cache.Skeletons[model])
+            removeAll(cache.HealthBars[model])
+            removeAll(cache.NameTags[model])
 
-            if cache.HeadDots[model] then
-                if cache.HeadDots[model].Remove then cache.HeadDots[model]:Remove() end
-                cache.HeadDots[model] = nil
-            end
-
-            if cache.Skeletons[model] then
-                for _, line in ipairs(cache.Skeletons[model]) do
-                    if line.Remove then line:Remove() end
-                end
-                cache.Skeletons[model] = nil
-            end
-
-            if cache.HealthBars[model] then
-                local bar = cache.HealthBars[model]
-                if bar.Background and bar.Background.Remove then bar.Background:Remove() end
-                if bar.Foreground and bar.Foreground.Remove then bar.Foreground:Remove() end
-                cache.HealthBars[model] = nil
-            end
-
-            if cache.NameTags[model] then
-                if cache.NameTags[model].Remove then cache.NameTags[model]:Remove() end
-                cache.NameTags[model] = nil
-            end
+            cache.CornerBoxes[model] = nil
+            cache.FillBoxes[model] = nil
+            cache.HeadDots[model] = nil
+            cache.Skeletons[model] = nil
+            cache.HealthBars[model] = nil
+            cache.NameTags[model] = nil
         end
     end
 
@@ -830,41 +825,36 @@ game:GetService("RunService").RenderStepped:Connect(function()
         end
 
         local onScreen, screenPos = isOnScreenAndInDistance(root.Position)
-        if not onScreen then
-            if cache.NameTags[model] then cache.NameTags[model].Visible = false end
+        if not onScreen or (camera.CFrame.Position - root.Position).Magnitude > 200 then
 
-            if cache.HealthBars[model] then
-                if cache.HealthBars[model].Background then cache.HealthBars[model].Background.Visible = false end
-                if cache.HealthBars[model].Foreground then cache.HealthBars[model].Foreground.Visible = false end
-            end
-
-            if cache.FillBoxes[model] then
-                cache.FillBoxes[model].Visible = false
-            end
-
-            if cache.HeadDots[model] then
-                cache.HeadDots[model].Visible = false
-            end
-
-            if cache.CornerBoxes[model] then
-                for _, l in ipairs(cache.CornerBoxes[model]) do
-                    l.Visible = false
+            local function hide(t)
+                if not t then return end
+                if typeof(t) == "table" then
+                    for _, v in pairs(t) do
+                        if typeof(v) == "table" then
+                            for _, sub in pairs(v) do if sub then sub.Visible = false end end
+                        elseif v then
+                            v.Visible = false
+                        end
+                    end
+                elseif t then
+                    t.Visible = false
                 end
             end
 
-            if cache.Skeletons[model] then
-                for _, l in ipairs(cache.Skeletons[model]) do
-                    l.Visible = false
-                end
-            end
-
+            hide(cache.CornerBoxes[model])
+            hide(cache.FillBoxes[model])
+            hide(cache.HeadDots[model])
+            hide(cache.Skeletons[model])
+            hide(cache.HealthBars[model])
+            hide(cache.NameTags[model])
             continue
         end
 
         local topVec3 = head.Position + head.CFrame.UpVector * (head.Size.Y / 2)
 
         local lowestY = root.Position.Y
-        for _, part in ipairs(model:GetDescendants()) do
+        for _, part in ipairs(model:GetChildren()) do
             if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
                 if part.Position.Y < lowestY then
                     lowestY = part.Position.Y
@@ -876,7 +866,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
 
         local topVec2 = camera:WorldToViewportPoint(topVec3)
         local bottomVec2 = camera:WorldToViewportPoint(bottomVec3)
-        local screenPos = camera:WorldToViewportPoint(root.Position)
+        screenPos = camera:WorldToViewportPoint(root.Position)
 
         local scaleFactor = 1.7
         local originalHeight = math.abs(topVec2.Y - bottomVec2.Y)
@@ -888,15 +878,16 @@ game:GetService("RunService").RenderStepped:Connect(function()
         bottomVec2 = Vector3.new(bottomVec2.X, centerY + boxHeight / 2, 0)
         local boxCenter = screenPos
 
-        updateSkeleton(model)
+        if updateSkeletons then updateSkeleton(model) end
         updateCornerBoxes(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
         updateFillBox(model, topVec2, bottomVec2, boxCenter, boxWidth, boxHeight)
-        updateHealthbar(model, topVec2, bottomVec2, boxCenter, boxWidth, humanoid, boxHeight)
+        if updateHealth then updateHealthbar(model, topVec2, bottomVec2, boxCenter, boxWidth, humanoid, boxHeight) end
         updateNametag(model, topVec2, bottomVec2, boxCenter)
         updateHeadDot(model, topVec2, bottomVec2, boxCenter)
+
         updateColors()
     end
-end)
+end) --rawupdatetest
 
 return {
     espSettings = espSettings,
