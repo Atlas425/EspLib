@@ -743,7 +743,7 @@ local function updateColors()
     for model, tag in pairs(cache.NameTags) do
         if tag then
             tag.Color = espColors.Nametags or Color3.new(1, 1, 1)
-            tag.Font = espSettings.Font or Drawing.Fonts.UI
+            tag.Font = 2
         end
     end
 
