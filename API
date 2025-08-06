@@ -406,7 +406,9 @@ end
 local function updateSkeleton(model)
     if not espSettings.Skeleton then
         if cache.Skeletons[model] then
-            for _, l in ipairs(cache.Skeletons[model]) do l.Visible = false end
+            for _, l in ipairs(cache.Skeletons[model]) do
+                l.Visible = false
+            end
         end
         return
     end
@@ -415,21 +417,32 @@ local function updateSkeleton(model)
     if not humanoid then return end
     local rigType = humanoid.RigType
 
+    -- Allocate drawing lines once
     cache.Skeletons[model] = cache.Skeletons[model] or {}
-    for _, line in ipairs(cache.Skeletons[model]) do line:Remove() end
-    cache.Skeletons[model] = {}
+    local lines = cache.Skeletons[model]
+    local i = 1
+
+    local function getLine()
+        if not lines[i] then
+            lines[i] = createLine()
+        end
+        local line = lines[i]
+        i += 1
+        return line
+    end
 
     local function drawLine(fromWorld, toWorld)
         local from2D, visA = camera:WorldToViewportPoint(fromWorld)
         local to2D, visB = camera:WorldToViewportPoint(toWorld)
-        local line = createLine()
+        local line = getLine()
         if visA and visB then
             line.From = Vector2.new(from2D.X, from2D.Y)
             line.To = Vector2.new(to2D.X, to2D.Y)
             line.Color = espColors.Skeleton
             line.Visible = true
+        else
+            line.Visible = false
         end
-        table.insert(cache.Skeletons[model], line)
     end
 
     if rigType == Enum.HumanoidRigType.R15 then
@@ -443,18 +456,11 @@ local function updateSkeleton(model)
 
         for _, pair in ipairs(bones) do
             local a, b = model:FindFirstChild(pair[1]), model:FindFirstChild(pair[2])
-            local line = createLine()
             if a and b then
-                local a2D, visA = camera:WorldToViewportPoint(a.Position)
-                local b2D, visB = camera:WorldToViewportPoint(b.Position)
-                if visA and visB then
-                    line.From = Vector2.new(a2D.X, a2D.Y)
-                    line.To = Vector2.new(b2D.X, b2D.Y)
-                    line.Color = espColors.Skeleton
-                    line.Visible = true
-                end
+                drawLine(a.Position, b.Position)
+            else
+                getLine().Visible = false
             end
-            table.insert(cache.Skeletons[model], line)
         end
 
     elseif rigType == Enum.HumanoidRigType.R6 then
@@ -475,7 +481,6 @@ local function updateSkeleton(model)
         local torsoTopRight = torso.Position + horizontalOffset + shoulderHeight
 
         drawLine(head.Position, torso.Position)
-
         drawLine(torsoMid, torsoTopLeft)
         drawLine(torsoMid, torsoTopRight)
 
@@ -484,10 +489,8 @@ local function updateSkeleton(model)
         local leftArmTop = leftArm.Position + leftArm.CFrame.UpVector * leftArm.Size.Y / 2 * 0.75
         local rightArmTop = rightArm.Position + rightArm.CFrame.UpVector * rightArm.Size.Y / 2 * 0.75
 
-
         drawLine(leftArmTop, leftArmBottom)
         drawLine(rightArmTop, rightArmBottom)
-
         drawLine(leftArmTop, torsoTopLeft)
         drawLine(rightArmTop, torsoTopRight)
 
@@ -500,6 +503,12 @@ local function updateSkeleton(model)
         drawLine(torsoMid, rightLegTop)
         drawLine(leftLegTop, leftLegBottom)
         drawLine(rightLegTop, rightLegBottom)
+    end
+
+    for j = i, #lines do
+        if lines[j] then
+            lines[j].Visible = false
+        end
     end
 end
 
@@ -563,7 +572,10 @@ end
 
 local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, humanoid, boxHeight)
     local camera = workspace.CurrentCamera
-    local hrpPos = model:FindFirstChild("HumanoidRootPart").Position
+    local hrp = model:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local hrpPos = hrp.Position
     local screenPos, onScreen = camera:WorldToViewportPoint(hrpPos)
 
     if not espSettings.Healthbar
@@ -573,35 +585,23 @@ local function updateHealthbar(model, topVec, bottomVec, boxCenter, boxWidth, hu
         or not onScreen
     then
         if cache.HealthBars[model] then
-            if cache.HealthBars[model].Foreground then
-                cache.HealthBars[model].Foreground:Remove()
-            end
-            if cache.HealthBars[model].Background then
-                cache.HealthBars[model].Background:Remove()
-            end
-            cache.HealthBars[model] = nil
+            cache.HealthBars[model].Background.Visible = false
+            cache.HealthBars[model].Foreground.Visible = false
         end
         return
     end
 
-    if cache.HealthBars[model] then
-        if cache.HealthBars[model].Foreground then
-            cache.HealthBars[model].Foreground:Remove()
-        end
-        if cache.HealthBars[model].Background then
-            cache.HealthBars[model].Background:Remove()
-        end
+    if not cache.HealthBars[model] then
+        cache.HealthBars[model] = {
+            Background = Drawing.new("Line"),
+            Foreground = Drawing.new("Line")
+        }
     end
 
-    local background = Drawing.new("Line")
-    local foreground = Drawing.new("Line")
-    cache.HealthBars[model] = {
-        Background = background,
-        Foreground = foreground
-    }
+    local background = cache.HealthBars[model].Background
+    local foreground = cache.HealthBars[model].Foreground
 
     local healthRatio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
-
     local xOffset = math.clamp(boxWidth * 0.2, 4, 10)
 
     local barX = boxCenter.X - boxWidth / 2 - xOffset
