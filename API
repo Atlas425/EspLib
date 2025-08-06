@@ -825,7 +825,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
         end
 
         local onScreen, screenPos = isOnScreenAndInDistance(root.Position)
-        if not onScreen or (camera.CFrame.Position - root.Position).Magnitude > 200 then
+        if not onScreen or (camera.CFrame.Position - root.Position).Magnitude > espSettings.MaxDistance then
 
             local function hide(t)
                 if not t then return end
