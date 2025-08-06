@@ -693,7 +693,7 @@ local function updateNametag(model, topVec, bottomVec, boxCenter)
 
     tag.Text = customNames[model] or model.Name
     tag.Size = espSettings.TextSize
-    tag.Font = espSettings.Font
+    tag.Font = 2
 
     local boxHeight = bottomVec.Y - topVec.Y
 
