@@ -9,9 +9,10 @@ local textTable = {
 
 espLib.addDisplayBox(game.Workspace.TargetModel, textTable) -- Creates a billboardgui text box with icons/text grid based on model size.
 --No primary part is needed for this because it creates a center part as the billboard adornee in the middle of the model, so any model is valid.
+--Scaling for the text/labels is a bit messed up, will fix in future
 
 local espSettings = {
-    MaxDistance = 1000, --doesn't work for chams/skeleton lines, will fix in future when i come back to this project
+    MaxDistance = 1000,
     TextSize = 8,
     Boxes = false,
     FillBoxes = false,
@@ -27,6 +28,20 @@ local espSettings = {
     FovRadius = 90,
 }
 
+local cache = { --can reference the cache in case you need to delete something for whatever reason
+	CornerBoxes = {},
+	Boxes = {},
+    FillBoxes = {},
+	Chams = {},
+	Snaplines = {},
+	NameTags = {},
+	HealthBars = {},
+	FontElements = {},
+	DisplayBoxes = {},
+	FovDrawings = {},
+    Skeletons = {},
+    HeadDots = {},
+}
 
 Functions:
     espSettings = espSettings,
@@ -54,9 +69,8 @@ espLib.drawSnaplines(model, mousePos, modelPos) --Draws snapline from center of 
 espLib.drawCircle(false) --Draws simple fov circle based on configuration settings.
 espLib.drawFOVCircle(true) --Updates any existing circles radius and position to espsettings radius. (Useful if window size changes, or you want to change fov circle radius)
 
-table.insert(chamsExclusionList, game.Workspace.TargetModel.LeftArm.Name) --Excludes this part from being created in chams
+espLib.chamsExclusionList = {"Hitbox"} --Excludes this part from being created in chams, useful when game has custom hitboxes, or weird parts invis parts parented to player
 espLib.createChams(game.Workspace.TargetModel) --Creates chams based on settings for every single basepart found in TargetModel. A basepart can also be passed to this function.
-
 
 espLib.chamsTween(game.Workspace.TargetModel) --Creates color tweening effect to espColors.ChamsTweenEnd if chams already exist for that model. Useful as a death effect, or smooth color changing transitioning.
 
