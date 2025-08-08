@@ -255,98 +255,104 @@ local function checkValidPart(part)
 end
 
 local function createChams(part)
-	if part:IsA("BasePart") or part:IsA("Model") then
-		
-		if part:FindFirstChild("Head") then
-			local chams = Instance.new("CylinderHandleAdornment")
-			chams.CFrame = CFrame.Angles(math.rad(90), 0, 0)
-			chams.Transparency = 0
-			chams.Height = part.Head.Size.X * 0.7
-			chams.Radius = part.Head.Size.Y / 1.5
-			chams.ZIndex = 2
-			chams.AlwaysOnTop = false
-			chams.Color3 = espColors.ChamsVis
-			chams.Adornee = part.Head
-			chams.AdornCullingMode = Enum.AdornCullingMode.Never
-			chams.Name = "Chams"
-			chams.Parent = part.Head
-			cache.Chams[part] = {chams}
+	if part:IsA("BasePart") then
+		if not checkValidPart(part) then return end
 
-			local chams = Instance.new("CylinderHandleAdornment")
-			chams.CFrame = CFrame.Angles(math.rad(90), 0, 0)
-			chams.Transparency = 0.5
-			chams.Height = part.Head.Size.X * 0.6
-			chams.Radius = part.Head.Size.Y / 1.75
-			chams.ZIndex = 2
-			chams.AlwaysOnTop = true
-			chams.Color3 = espColors.Chams
-			chams.Adornee = part.Head
-			chams.AdornCullingMode = Enum.AdornCullingMode.Never
-			chams.Name = "Chams"
-			chams.Parent = part.Head
-			cache.Chams[part] = {chams}
-		end
-		
-		if part.Name == "Head" then
-			local chams = Instance.new("CylinderHandleAdornment")
-			chams.CFrame = CFrame.Angles(math.rad(90), 0, 0)
-			chams.Transparency = 0
-			chams.Height = part.Head.Size.X * 0.7
-			chams.Radius = part.Head.Size.Y / 1.5
-			chams.ZIndex = 2
-			chams.AlwaysOnTop = false
-			chams.Color3 = espColors.ChamsVis
-			chams.Adornee = part.Head
-			chams.AdornCullingMode = Enum.AdornCullingMode.Never
-			chams.Name = "Chams"
-			chams.Parent = part.Head
-			cache.Chams[part] = {chams}
+		local chamsList = {}
 
-			local chams = Instance.new("CylinderHandleAdornment")
-			chams.CFrame = CFrame.Angles(math.rad(90), 0, 0)
-			chams.Transparency = 0.5
-			chams.Height = part.Head.Size.X * 0.6
-			chams.Radius = part.Head.Size.Y / 1.75
-			chams.ZIndex = 2
-			chams.AlwaysOnTop = true
-			chams.Color3 = espColors.Chams
-			chams.Adornee = part.Head
-			chams.AdornCullingMode = Enum.AdornCullingMode.Never
-			chams.Name = "Chams"
-			chams.Parent = part.Head
-			cache.Chams[part] = {chams}
-		end
-		
-		if part:IsA("Model") then
+		local chams = Instance.new("BoxHandleAdornment")
+		chams.Transparency = 0.5
+		chams.Size = part.Size * 1.02
+		chams.ZIndex = 2
+		chams.AlwaysOnTop = true
+		chams.Color3 = espColors.Chams
+		chams.Adornee = part
+		chams.AdornCullingMode = Enum.AdornCullingMode.Never
+		chams.Name = "Chams"
+		chams.Parent = part
+		table.insert(chamsList, chams)
+
+		local chamsVis = Instance.new("BoxHandleAdornment")
+		chamsVis.Transparency = 0
+		chamsVis.Size = part.Size * 1.1
+		chamsVis.ZIndex = 2
+		chamsVis.AlwaysOnTop = false
+		chamsVis.Color3 = espColors.ChamsVis
+		chamsVis.Adornee = part
+		chamsVis.AdornCullingMode = Enum.AdornCullingMode.Never
+		chamsVis.Name = "Chams"
+		chamsVis.Parent = part
+		table.insert(chamsList, chamsVis)
+
+		cache.Chams[part] = chamsList
+
+	elseif part:IsA("Model") then
+		local head = part:FindFirstChild("Head")
+		if head and head:IsA("BasePart") and not isExcluded(head.Name) then
 			local chamsList = {}
-			
-			for i, p in pairs(part:GetChildren()) do
-				if not checkValidPart(p) then continue end
+
+			local chams = Instance.new("CylinderHandleAdornment")
+			chams.CFrame = CFrame.Angles(math.rad(90), 0, 0)
+			chams.Transparency = 0
+			chams.Height = head.Size.X * 0.7
+			chams.Radius = head.Size.Y / 1.5
+			chams.ZIndex = 2
+			chams.AlwaysOnTop = false
+			chams.Color3 = espColors.ChamsVis
+			chams.Adornee = head
+			chams.AdornCullingMode = Enum.AdornCullingMode.Never
+			chams.Name = "Chams"
+			chams.Parent = head
+			table.insert(chamsList, chams)
+
+			local chamsOverlay = Instance.new("CylinderHandleAdornment")
+			chamsOverlay.CFrame = CFrame.Angles(math.rad(90), 0, 0)
+			chamsOverlay.Transparency = 0.5
+			chamsOverlay.Height = head.Size.X * 0.6
+			chamsOverlay.Radius = head.Size.Y / 1.75
+			chamsOverlay.ZIndex = 2
+			chamsOverlay.AlwaysOnTop = true
+			chamsOverlay.Color3 = espColors.Chams
+			chamsOverlay.Adornee = head
+			chamsOverlay.AdornCullingMode = Enum.AdornCullingMode.Never
+			chamsOverlay.Name = "Chams"
+			chamsOverlay.Parent = head
+			table.insert(chamsList, chamsOverlay)
+
+			cache.Chams[part] = chamsList
+		end
+
+		local chamsList = {}
+		for _, child in ipairs(part:GetChildren()) do
+			if not checkValidPart(child) then continue end
+			if child:IsA("BasePart") then
 				local chams = Instance.new("BoxHandleAdornment")
 				chams.Transparency = 0.5
-				chams.Size = p.Size * 1.02
+				chams.Size = child.Size * 1.02
 				chams.ZIndex = 2
 				chams.AlwaysOnTop = true
 				chams.Color3 = espColors.Chams
-				chams.Adornee = p
+				chams.Adornee = child
 				chams.AdornCullingMode = Enum.AdornCullingMode.Never
 				chams.Name = "Chams"
-				chams.Parent = p
+				chams.Parent = child
 				table.insert(chamsList, chams)
 
-				local chams = Instance.new("BoxHandleAdornment")
-				chams.Transparency = 0
-				chams.Size = p.Size * 1.1
-				chams.ZIndex = 2
-				chams.AlwaysOnTop = false
-				chams.Color3 = espColors.ChamsVis
-				chams.Adornee = p
-				chams.AdornCullingMode = Enum.AdornCullingMode.Never
-				chams.Name = "Chams"
-				chams.Parent = p
-				table.insert(chamsList, chams)
+				local chamsVis = Instance.new("BoxHandleAdornment")
+				chamsVis.Transparency = 0
+				chamsVis.Size = child.Size * 1.1
+				chamsVis.ZIndex = 2
+				chamsVis.AlwaysOnTop = false
+				chamsVis.Color3 = espColors.ChamsVis
+				chamsVis.Adornee = child
+				chamsVis.AdornCullingMode = Enum.AdornCullingMode.Never
+				chamsVis.Name = "Chams"
+				chamsVis.Parent = child
+				table.insert(chamsList, chamsVis)
 			end
-			
+		end
+
+		if #chamsList > 0 then
 			cache.Chams[part] = chamsList
 		end
 	end
