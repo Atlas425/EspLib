@@ -67,7 +67,7 @@ local modelPos = model.Head.Position
 
 espLib.drawSnaplines(model, mousePos, modelPos) --Draws snapline from center of screen to mouse, TargetModel is the key. Automatically converts Position or CFrame to 2d vector.
 espLib.drawCircle(false) --Draws simple fov circle based on configuration settings.
-espLib.drawFOVCircle(true) --Updates any existing circles radius and position to espsettings radius. (Useful if window size changes, or you want to change fov circle radius)
+espLib.drawCircle(true) --Updates any existing circles radius and position to espsettings radius. (Useful if window size changes, or you want to change fov circle radius)
 
 espLib.chamsExclusionList = {"Hitbox"} --Excludes this part from being created in chams, useful when game has custom hitboxes, or weird parts invis parts parented to player
 espLib.createChams(game.Workspace.TargetModel) --Creates chams based on settings for every single basepart found in TargetModel. A basepart can also be passed to this function.
