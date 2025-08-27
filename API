@@ -249,10 +249,19 @@ local function isExcluded(partName)
 end
 
 local function checkValidPart(part)
-	if not part:IsA("BasePart") or part.Name == "HumanoidRootPart" or part.Name == "Head" or isExcluded(part.Name) then return false end
-	
-	return true
+    if isExcluded(part.Name) then
+        print("Excluding:", part.Name)
+    end
+    
+    if not part:IsA("BasePart") 
+       or part.Name == "HumanoidRootPart" 
+       or part.Name == "Head" 
+       or isExcluded(part.Name) then
+        return false
+    end
+    return true
 end
+
 
 local function createChams(part)
 	if part:IsA("BasePart") then
